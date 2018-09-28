@@ -1,14 +1,16 @@
 import os
 import re
-import anndata
 import typing
+import numpy as np
+import pandas as pd
+import pkg_resources
+from configparser import ConfigParser, ExtendedInterpolation
+
+import anndata
 from scanpy.readwrite import read_10x_h5
 from scanpy.readwrite import read as scread, write as scwrite
-from datetime import datetime
-from argparse import Namespace
-from configparser import ConfigParser, ExtendedInterpolation
-import pkg_resources
 
+from .utils import timestamp, shift_metadata, silence
 
 
 class AnalysisConfig(object):
@@ -21,6 +23,7 @@ class AnalysisConfig(object):
     def __init__(self):
         #self.parser = ConfigParser(interpolation=ExtendedInterpolation())
         self.parser = ConfigParser(allow_no_value=True)
+        self.parser.optionxform = lambda option: option
         self._load_default_template()
 
     def _load_default_template(self):
@@ -30,7 +33,8 @@ class AnalysisConfig(object):
 
     def _validate_string_config(self, input_string):
         config = ConfigParser(allow_no_value=True)
-        config.parse_string(input_string)
+        config.optionxform = lambda option: option
+        config.read_string(input_string)
         for section in self.required_sections:
             if section not in config:
                 raise Exception(f"Required section {section} not found.")
@@ -38,7 +42,7 @@ class AnalysisConfig(object):
                 raise Exception(
                     f"Placeholder {placeholder_prefix}* found under section {section}"
                 )
-            for key, value in config.items("section"):
+            for key, value in config.items():
                 assert self.placeholder_prefix not in key
                 assert self.placeholder_prefix not in value
         sample_names = set(config["sample_names"].keys())
@@ -49,26 +53,19 @@ class AnalysisConfig(object):
 
 
     def print_template(self):
-        print("config = \"\"\"")
+        print("config_string = \"\"\"")
         print(self.default_template)
         print("\"\"\"")
         print("The following sections are required:")
         print(self.required_sections)
 
     def read(self, input_string):
-        self.config = self._validate_string_template(input_string)
+        self.config = self._validate_string_config(input_string)
         return self.config
 
     def read_file(self, input_file):
         with open(input_file, 'r') as fin:
             return self.read(fin.read())
-
-
-def timestamp():
-    """
-    Returns current time in format: YYYY-MM-DDThh-mm-ss
-    """
-    return datetime.now().strftime('%Y-%m-%dT%H-%M-%S')
 
 
 def load_10x_data(sample_name: str, config: AnalysisConfig):
@@ -102,8 +99,9 @@ def load_10x_data(sample_name: str, config: AnalysisConfig):
         h5_file = os.path.join(input_dir, h5s[1])
 
     genome = config["genomes"][sample_name]
-    adata = read_10x_h5(h5_file, genome)
-    adata.var_names_make_unique()
+    with silence():
+        adata = read_10x_h5(h5_file, genome)
+        adata.var_names_make_unique()
 
     adata.obs['sequencing_saturation'] = np.nan
     seqsat = pd.read_csv(os.path.join(input_dir,
@@ -124,12 +122,6 @@ def load_10x_data(sample_name: str, config: AnalysisConfig):
     adata.uns['output_dir'] = os.path.abspath(output_dir)
 
     return adata
-
-
-def shift_metadata(adata, uns_key):
-    prev_key = adata.get(uns_key, None)
-    if prev_key is not None:
-        adata.uns[f"{uns_key}_previous"] = prev_key
 
 
 def save_anndata(adata, version=None):
@@ -211,3 +203,13 @@ def save_rds_file(adata):
     spl.read_write._make_rds(counts, features, tsne,
                              os.path.join(adata.uns["output_dir"],
                                           f"{adata.uns['sampleid']}_{timestamp()}.Rds"))
+
+
+__api_objects__ = {
+    "AnalysisConfig": AnalysisConfig,
+    "load_anndata": load_anndata,
+    "save_anndata": save_anndata,
+    "save_rds_file": save_rds_file,
+    "load_10x_data": load_10x_data,
+    "update_h5_metadata": update_h5_metadata
+}
