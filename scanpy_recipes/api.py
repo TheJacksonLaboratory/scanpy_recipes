@@ -4,13 +4,19 @@ from .recipes import preprocess, qc
 from . import plotting as pl
 from cmocean import cm as cmo
 
-for object_key, object in read_write_api.items():
-    sc.__dict__[object_key] = object
+for object_key, object_ in read_write_api.items():
+    sc.__dict__[object_key] = object_
 # sc.AnalysisConfig = AnalysisConfig
 # sc.save_rds_file = save_rds_file
 
 sc.processing = preprocess
 sc.qc = qc
+
+for object_key, object_ in qc.__api_items__.items():
+    sc.qc.__dict__[object_key] = object_
+
+for object_key, object_ in preprocess.__api_items__.items():
+    sc.pp.__dict__[object_key] = object_
 
 del read_write_api
 del preprocess, qc, pl
