@@ -104,10 +104,15 @@ def load_10x_data(sample_name: str, config: AnalysisConfig):
         adata.var_names_make_unique()
 
     adata.obs['sequencing_saturation'] = np.nan
-    seqsat = pd.read_csv(os.path.join(input_dir,
-                                      "sequencing_saturation.csv"),
-                         index_col=0, header=0)
-    adata.obs.loc[seqsat.index, 'sequencing_saturation'] = seqsat['saturation'].values
+    seqsat_file = os.path.join(input_dir, "sequencing_saturation.csv")
+    if os.path.exists(seqsat_file):
+        seqsat = pd.read_csv(seqsat_file, index_col=0, header=0)
+        adata.obs.loc[seqsat.index, 'sequencing_saturation'] = seqsat['saturation'].values
+
+    metrics_file = os.path.join(input_dir, "metrics_summary.csv")
+    if os.path.exists(metrics_file):
+        metrics = pd.read_csv(metrics_file, header=0)
+        adata.uns["sequencing_metrics"] = metrics.to_dict(orient="index")[0]
 
     adata.uns['sampleid'] = sample_name
     adata.uns['genome'] = genome
@@ -167,18 +172,6 @@ def load_anndata(infile):
     return adata
 
 
-def update_h5_metadata(fin: typing.Union[anndata.AnnData, str],
-                       metadata: dict):
-    adata_in = fin
-    if isinstance(fin, str):
-        adata_in = load_anndata(fin)
-
-    for key, value in dict.items():
-        adata_in.uns[key] = value
-
-    save_anndata(adata_in)
-
-
 def save_rds_file(adata):
     """
     """
@@ -211,5 +204,4 @@ __api_objects__ = {
     "save_anndata": save_anndata,
     "save_rds_file": save_rds_file,
     "load_10x_data": load_10x_data,
-    "update_h5_metadata": update_h5_metadata
 }
