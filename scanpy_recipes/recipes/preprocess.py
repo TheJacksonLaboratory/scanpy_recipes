@@ -15,8 +15,9 @@ def preprocess(adata_raw, n_top_genes=1000, scale=False):
     adata.raw = adata
 
     adata.uns["n_top_genes"] = n_top_genes
-    adata_filt = pp.filter_genes_dispersion(adata, n_top_genes=n_top_genes,
-                                               flavor="cell_ranger", log=True, copy=True)
+    adata_filt = pp.filter_genes_dispersion(
+        adata, n_top_genes=n_top_genes, flavor="cell_ranger", log=True, copy=True
+    )
     pp.normalize_per_cell(adata_filt)
 
     pp.log1p(adata)
@@ -27,8 +28,15 @@ def preprocess(adata_raw, n_top_genes=1000, scale=False):
     return adata, adata_filt
 
 
-def dimensionality_reduction(adata_filt, n_comps=50, n_neighbors=10, min_dist=0.5, metric="correlation",
-                             is_aggregation=False):
+def dimensionality_reduction(
+    adata_filt,
+    n_comps=50,
+    n_neighbors=10,
+    min_dist=0.5,
+    metric="correlation",
+    is_aggregation=False,
+    match=False,
+):
     pp.pca(adata_filt, n_comps=n_comps, svd_solver="arpack")
 
     if is_aggregation:
@@ -36,8 +44,8 @@ def dimensionality_reduction(adata_filt, n_comps=50, n_neighbors=10, min_dist=0.
         bbknn(
             adata_filt,
             metric="angular",
-            neighbors_within_batch=n_neighbors//n_batches,
-            approx=True
+            neighbors_within_batch=n_neighbors // n_batches,
+            approx=True,
         )
     else:
         neighbors(adata_filt, n_neighbors=n_neighbors, metric=metric)
@@ -45,27 +53,17 @@ def dimensionality_reduction(adata_filt, n_comps=50, n_neighbors=10, min_dist=0.
     adata_filt.uns["neighbors"]["params"]["metric"] = metric
     umap(adata_filt, min_dist=min_dist, n_components=3)
     adata_filt.obsm["X_umap_3d"] = adata_filt.obsm["X_umap"].copy()
-    umap(adata_filt, min_dist=min_dist, n_components=2)
+    init_pos = "spectral" if not match else "X_umap_3d"
+    umap(adata_filt, min_dist=min_dist, n_components=2, init_pos=init_pos)
 
-
-def cluster(adata_filt, key_added="cluster", use_louvain=False):
-    if use_louvain:
-        louvain(adata_filt, key_added=key_added)
-    else:
-        leiden(adata_filt, key_added=key_added)
-
-    #sc.tl.paga(adata_filt)
-    if adata_filt.obs[key_added].astype(int).min() == 0:
-        adata_filt.obs[key_added] = (adata_filt.obs[key_added].astype(int) + 1).astype("category")
 
 __api_objects__ = {
     "preprocess": preprocess,
     "dimensionality_reduction": dimensionality_reduction,
-    "cluster": cluster
 }
 
 
-#def find_markers(adata_filt):
+# def find_markers(adata_filt):
 #    sc.tl.rank_genes_groups(adata_filt, "louvain", method="wilcoxon", use_raw=False,
 #                            key_added="rank_genes_groups-wilcoxon")
 #    sc.tl.rank_genes_groups(adata_filt, "louvain", method="t-test_overestim_var", use_raw=False,
@@ -85,7 +83,7 @@ __api_objects__ = {
 #    os.rename(os.path.join("figures", "matrixplot.pdf"), save_file)
 #
 #
-#def print_markers(adata_filt, method, outfile):
+# def print_markers(adata_filt, method, outfile):
 #    names = adata_filt.uns[f"rank_genes_groups-{method}"]["names"]
 #    marker_df = pd.DataFrame(names)
 #    marker_df.index.name = "Rank"
