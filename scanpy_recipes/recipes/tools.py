@@ -118,7 +118,7 @@ def find_marker_genes(adata, cluster_key="cluster", log_fold_change=1.0):
     print(f"\nComputed markers for {len(clusters)} clusters.")
 
     markers = pd.concat(auc_scores)
-    markers.columns = ["gene_name", "AUROC", "avg_diff", cluster_key]
+    markers = markers.reindex(columns=["gene_name", "AUROC", "avg_diff", cluster_key])
     markers = markers.reset_index(drop=True)
     adata.uns["auroc_markers"] = markers
 
