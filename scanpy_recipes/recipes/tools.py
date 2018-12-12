@@ -1,8 +1,20 @@
 import os
 import numpy as np
 import pandas as pd
+from sklearn import metrics
+from scipy.stats import wilcoxon
 from scanpy.tools.leiden import leiden
 from scanpy.tools.louvain import louvain
+
+
+def logmean(x, axis=0):
+    return np.log1p(np.mean(x, axis=axis))
+
+def logmeanexp(x, axis=0):
+    return np.log1p(np.mean(np.expm1(x), axis=axis))
+
+def xflatten(x):
+    return np.asarray(x).flatten()
 
 
 def cluster(adata_filt, resolution=1.0, key_added="cluster", use_louvain=False):
@@ -71,7 +83,50 @@ def order_clusters(adata, key):
     )
 
 
+def find_marker_genes(adata, cluster_key="cluster", log_fold_change=1.0):
+    clusters = adata.obs[cluster_key].cat.categories
+
+    auc_scores = []
+    for cluster in clusters:
+        print(cluster, end=" ")
+        inds = adata.obs[cluster_key] == cluster
+
+        group = adata.raw[inds, :]
+        rest = adata.raw[~inds, :]
+
+        group_mean = xflatten(logmean(group.X, axis=0))
+        rest_mean = xflatten(logmean(rest.X, axis=0))
+        diff = abs(group_mean - rest_mean)
+        gene_inds = np.where(diff > log_fold_change)[0]
+
+        truth = inds.astype(int).values
+        scores = []
+        for gene_ind in gene_inds:
+            pred = xflatten(adata.raw.X[:, gene_ind].todense())
+            scores.append(metrics.roc_auc_score(truth, pred))
+
+        tmp = pd.DataFrame({
+            "AUROC": scores,
+            "gene_name": adata.raw.var_names[gene_inds],
+            "avg_diff": diff[gene_inds],
+            f"{cluster_key}": np.repeat([cluster], len(scores))
+        })
+        tmp = tmp.sort_values("AUROC", ascending=False)
+
+        auc_scores.append(tmp)
+
+    print(f"\nComputed markers for {len(clusters)} clusters.")
+
+    markers = pd.concat(auc_scores)
+    markers.columns = ["gene_name", "AUROC", "avg_diff", cluster_key]
+    markers = markers.reset_index(drop=True)
+    adata.uns["auroc_markers"] = markers
+
+    return markers
+
+
 __api_objects__ = {
     "cluster": cluster,
     "subcluster": subcluster,
+    "find_marker_genes": find_marker_genes
 }
