@@ -1,6 +1,7 @@
 import os
 import re
 import typing
+import inspect
 import numpy as np
 import pandas as pd
 import pkg_resources
@@ -9,6 +10,7 @@ from configparser import ConfigParser, ExtendedInterpolation
 import anndata
 from scanpy.readwrite import read_10x_h5
 from scanpy.readwrite import read as scread, write as scwrite
+from scanpy.preprocessing.simple import normalize_per_cell, log1p
 
 from .utils import datestamp, timestamp, shift_metadata, silence, quantile_limit
 from .qsub import submit_rds_job
@@ -177,12 +179,12 @@ def save_adata_to_rds(adata, cluster_key="cluster", aggr=False, n_dims=3):
     tmpd = pd.DataFrame(np.asarray(adata.raw.X.todense()),
                         index=adata.obs_names,
                         columns=adata.raw.var_names)
-    tmpd = sc.AnnData(tmpd, var=adata.raw.var, obs=adata.obs)
+    tmpd = anndata.AnnData(tmpd, var=adata.raw.var, obs=adata.obs)
 
     # if `.raw` counts aren't normalized, normalize them.
     # if they are, then normalization will return the same values (they're already normalized)
-    sc.pp.normalize_per_cell(tmpd)
-    sc.pp.log1p(tmpd)
+    normalize_per_cell(tmpd)
+    log1p(tmpd)
     counts = pd.DataFrame(tmpd.X, columns=tmpd.var_names, index=tmpd.obs_names).T
 
     features = pd.DataFrame({"Associated.Gene.Name": counts.index, "Chromosome.Name": 1}, index=counts.index)
@@ -243,15 +245,20 @@ def save_adata(obj, suffix):
     outname = f"{obj.uns['sampleid']}-{suffix}_{datestamp()}.h5ad"
     outfile = os.path.join(obj.uns["output_dir"], outname)
     print(f"Saving {outname} to {obj.uns['output_dir']}.")
-    sc.write(outfile, obj)
+    scwrite(outfile, obj)
 
 
 def save_all_adata():
-    adata_objects = list(filter(lambda x: x.startswith("adata"), globals().keys()))
-    for object_name in adata_objects:
-        suffix = object_name.split("_")[1]
-        obj = eval(object_name)
-        save_adata(obj, suffix)
+    frame = inspect.currentframe()
+    try:
+        objects = frame.f_back.f_locals.keys()
+        adata_objects = filter(lambda x: x.startswith("adata_"), objects)
+        for object_name in adata_objects:
+            suffix = object_name.split("_")[1]
+            obj = eval(object_name)
+            save_adata(obj, suffix)
+    finally:
+        del frame
 
 
 __api_objects__ = {
