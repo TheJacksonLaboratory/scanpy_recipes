@@ -10,7 +10,8 @@ import anndata
 from scanpy.readwrite import read_10x_h5
 from scanpy.readwrite import read as scread, write as scwrite
 
-from .utils import timestamp, shift_metadata, silence
+from .utils import datestamp, timestamp, shift_metadata, silence, quantile_limit
+from .qsub import submit_rds_job
 
 
 class AnalysisConfig(object):
@@ -121,7 +122,7 @@ def load_10x_data(sample_name: str, config: AnalysisConfig):
     adata.uns['analyst'] = config["names"]["analyst_name"]
     adata.uns['customer_name'] = config["names"]["customer_name"]
     adata.uns['analysis_version'] = 1
-    adata.uns['date_created'] = timestamp()
+    adata.uns['date_created'] = datestamp()
     adata.uns['input_file'] = os.path.abspath(h5_file)
     adata.uns['input_dir'] = os.path.abspath(input_dir)
     adata.uns['output_dir'] = os.path.abspath(output_dir)
@@ -151,7 +152,7 @@ def save_anndata(adata, version=None):
 
     shift_metadata(adata, "save_file")
     adata.uns["save_file"] = os.path.join(adata.uns["output_dir"],
-                                          f"analysis_{adata.uns['version']}_{timestamp()}.h5ad")
+                                          f"analysis_{adata.uns['version']}_{datestamp()}.h5ad")
     scwrite(adata.uns["save_file"], adata)
 
 
@@ -172,36 +173,94 @@ def load_anndata(infile):
     return adata
 
 
-def save_rds_file(adata):
-    """
-    """
-    counts = pd.DataFrame(adata.raw.X.todense(), columns=adata.raw.var_names, index=adata.obs_names).T
-    counts = np.log1p(counts)
+def save_adata_to_rds(adata, cluster_key="cluster", aggr=False, n_dims=3):
+    tmpd = pd.DataFrame(np.asarray(adata.raw.X.todense()),
+                        index=adata.obs_names,
+                        columns=adata.raw.var_names)
+    tmpd = sc.AnnData(tmpd, var=adata.raw.var, obs=adata.obs)
 
-    features = pd.DataFrame({'Associated.Gene.Name': counts.index, 'Chromosome.Name': 1}, index=counts.index)
+    # if `.raw` counts aren't normalized, normalize them.
+    # if they are, then normalization will return the same values (they're already normalized)
+    sc.pp.normalize_per_cell(tmpd)
+    sc.pp.log1p(tmpd)
+    counts = pd.DataFrame(tmpd.X, columns=tmpd.var_names, index=tmpd.obs_names).T
 
-    genes = adata.obs['n_genes']
-    genes[genes > genes.quantile(0.99)] = genes.quantile(0.99)
-    counts.ix['ENSGGENES'] = genes
-    umis = adata.obs['n_counts']
-    umis[umis > umis.quantile(0.99)] = umis.quantile(0.99)
-    counts.ix['ENSGUMI'] = umis
+    features = pd.DataFrame({"Associated.Gene.Name": counts.index, "Chromosome.Name": 1}, index=counts.index)
 
-    features.ix['ENSGGENES'] = ['Genes', 1]
-    features.ix['ENSGUMI'] = ['Umi', 1]
+    counts.loc["ENSGGENES", :] = quantile_limit(adata.obs, "n_genes")
+    counts.loc["ENSGUMI", :] = quantile_limit(adata.obs, "n_counts")
+    counts.loc["ENSGMITO", :] = quantile_limit(adata.obs, "percent_mito")
+    counts.loc["ENSGSEQSAT", :] = quantile_limit(adata.obs, "sequencing_saturation")
+    if aggr:
+        counts.ix["ENSGSAMP"] = adata.obs.batch.cat.codes
+        features.ix["ENSGSAMP"] = ["Sample", 1]
 
-    tsne = pd.DataFrame(adata.obsm['X_umap'], columns=['V1', 'V2', 'V3'], index=adata.obs_names)
-    tsne['dbCluster'] = adata.obs['louvain'].astype(int)
+    features.loc["ENSGGENES", :] = ["Genes", 1]
+    features.loc["ENSGUMI", :] = ["Umi", 1]
+    features.loc["ENSGMITO", :] = ["PercentMito", 1]
+    features.loc["ENSGSEQSAT", :] = ["Saturation", 1]
 
-    spl.read_write._make_rds(counts, features, tsne,
-                             os.path.join(adata.uns["output_dir"],
-                                          f"{adata.uns['sampleid']}_{timestamp()}.Rds"))
+    if n_dims == 3:
+        umap = adata.obsm["X_umap_3d"]
+    else:
+        umap = adata.obsm["X_umap"]
+        umap = np.column_stack((umap, np.zeros(umap.shape[0])))
+    tsne = pd.DataFrame(umap, columns=["V1", "V2", "V3"], index=adata.obs_names)
+    tsne["dbCluster"] = adata.obs[cluster_key].astype(int)
+
+    sampleid = adata.uns["sampleid"]
+    outdir = adata.uns["output_dir"]
+    for data, out_type in zip((counts, features, tsne),
+                              ("counts", "features", "umap3d")):
+        outname = f"{sampleid}_{out_type}.csv"
+        outfile = os.path.join(outdir, outname)
+        data.to_csv(outfile)
+        print(f"Saved {out_type} to {outfile}.")
+
+    submit_rds_job(sampleid, outdir, f"{sampleid}_{datestamp()}.Rds")
+
+
+def export_markers(adata, cluster_key):
+    excelname = f"{adata.uns['sampleid']}_markers_{datestamp()}.xlsx"
+    excelfile = os.path.join(adata.uns["output_dir"], excelname)
+
+    csvname = f"{adata.uns['sampleid']}_markers_{datestamp()}.csv"
+    csvfile = os.path.join(adata.uns["output_dir"], csvname)
+    markers = adata.uns["auroc_markers"]
+    markers.to_csv(csvfile)
+    print(f"CSV file saved to [{csvfile}].")
+
+    with pd.ExcelWriter(excelfile) as writer:
+        for cluster in markers[cluster_key].unique():
+            inds = markers[cluster_key] == cluster
+            name = f"Cluster {cluster}"
+            markers.loc[inds].to_excel(writer, name)
+        writer.save()
+    print(f"Excel file saved to [{excelfile}].")
+
+
+def save_adata(obj, suffix):
+    outname = f"{obj.uns['sampleid']}-{suffix}_{datestamp()}.h5ad"
+    outfile = os.path.join(obj.uns["output_dir"], outname)
+    print(f"Saving {outname} to {obj.uns['output_dir']}.")
+    sc.write(outfile, obj)
+
+
+def save_all_adata():
+    adata_objects = list(filter(lambda x: x.startswith("adata"), globals().keys()))
+    for object_name in adata_objects:
+        suffix = object_name.split("_")[1]
+        obj = eval(object_name)
+        save_adata(obj, suffix)
 
 
 __api_objects__ = {
     "AnalysisConfig": AnalysisConfig,
-    "load_anndata": load_anndata,
-    "save_anndata": save_anndata,
-    "save_rds_file": save_rds_file,
+    #"load_anndata": load_anndata,
+    #"save_anndata": save_anndata,
+    "save_adata": save_adata,
+    "save_all_adata": save_all_adata,
+    "save_adata_to_rds": save_adata_to_rds,
     "load_10x_data": load_10x_data,
+    "export_markers": export_markers,
 }

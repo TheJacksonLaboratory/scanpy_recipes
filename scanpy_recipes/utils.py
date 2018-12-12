@@ -8,7 +8,17 @@ def timestamp():
     """
     Returns current time in format: YYYY-MM-DDThh-mm-ss
     """
-    return datetime.now().strftime('%Y-%m-%dT%H-%M-%S')
+    return datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+
+
+def datestamp():
+    return datetime.now().strftime("%Y%m%d")
+
+
+def quantile_limit(obj, key, q=0.99):
+    obj = obj[key].copy()
+    obj[obj > obj.quantile(0.99)] = obj.quantile(0.99)
+    return obj
 
 
 def shift_metadata(adata, uns_key):
