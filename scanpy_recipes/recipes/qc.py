@@ -37,8 +37,8 @@ def gen_qc(raw_adata):
     raw_adata.uns["raw_cells"] = raw_cells
     raw_adata.uns["raw_genes"] = raw_genes
     raw_adata.uns["empty_genes"] = np.sum(raw_adata.var["n_cells"] == 0).astype(int)
-    raw_adata.uns["metrics"]["Median Sequencing Saturation per Cell"] = \
-        f"{raw_adata.obs['sequencing_saturation'].median().values[0]}%"
+    raw_adata.uns["sequencing_metrics"]["Median Sequencing Saturation per Cell"] = \
+        f"{raw_adata.obs['sequencing_saturation'].median()}%"
 
     raw_adata.uns["obs_titles"] = dict(
         n_counts="UMIs", n_genes="Genes", percent_mito="mtRNA content",
