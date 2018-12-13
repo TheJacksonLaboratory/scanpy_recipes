@@ -265,6 +265,16 @@ def save_all_adata():
         del frame
 
 
+def save_loom(adata):
+    outname = f"{obj.uns['sampleid']}_{datestamp()}.loom"
+    outfile = os.path.join(obj.uns["output_dir"], outname)
+
+    print(f"Saving {outname} to {obj.uns['output_dir']}.")
+    adata.write_loom(outfile)
+
+    return outfile
+
+
 __api_objects__ = {
     "AnalysisConfig": AnalysisConfig,
     #"load_anndata": load_anndata,
@@ -272,6 +282,7 @@ __api_objects__ = {
     "save_adata": save_adata,
     "save_all_adata": save_all_adata,
     "save_adata_to_rds": save_adata_to_rds,
+    "save_loom": save_loom,
     "load_10x_data": load_10x_data,
     "export_markers": export_markers,
 }
