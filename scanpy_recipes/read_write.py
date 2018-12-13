@@ -244,18 +244,22 @@ def export_markers(adata, cluster_key):
 def save_adata(obj, suffix):
     outname = f"{obj.uns['sampleid']}-{suffix}_{datestamp()}.h5ad"
     outfile = os.path.join(obj.uns["output_dir"], outname)
+
     print(f"Saving {outname} to {obj.uns['output_dir']}.")
     scwrite(outfile, obj)
+
+    return outfile
 
 
 def save_all_adata():
     frame = inspect.currentframe()
     try:
-        objects = frame.f_back.f_locals.keys()
-        adata_objects = filter(lambda x: x.startswith("adata_"), objects)
+        objects = frame.f_back.f_locals
+        adata_objects = filter(lambda x: x.startswith("adata_"), objects.keys())
         for object_name in adata_objects:
             suffix = object_name.split("_")[1]
-            obj = eval(object_name)
+            obj = objects[object_name]
+            #obj = getattr(objects, object_name)()
             save_adata(obj, suffix)
     finally:
         del frame
