@@ -66,9 +66,10 @@ def run_qc(adata_raw,
     filter_genes(adata_qc, min_cells=min_cells_per_gene)
     filter_genes(adata_qc, min_counts=min_counts_per_gene)
     adata.var["qc_fail_counts"] = ~adata.var_names.isin(adata_qc.var_names)
-    filter_cells(adata_qc, min_counts=min_counts_per_cell)
-    filter_cells(adata_qc, min_genes=min_genes_per_cell)
-    adata.obs["qc_fail_counts"] = ~adata.obs_names.isin(adata_qc.obs_names)
+    count_subset, n_counts = filter_cells(adata_qc.X, min_counts=min_counts_per_cell)
+    gene_subset, n_genes = filter_cells(adata_qc.X, min_genes=min_genes_per_cell)
+    adata.obs["qc_fail_counts"] = ~count_subset
+    adata.obs["qc_fail_genes"] = ~gene_subset
 
     seqsat_subset, mito_subset, rbc_subset = True, True, True
     if sequencing_saturation:
@@ -77,7 +78,7 @@ def run_qc(adata_raw,
         mito_subset = adata_qc.obs["percent_mito"] < percent_mito
     if rbc_threshold:
         rbc_subset = adata_qc.obs["hemoglobin_counts"] < rbc_threshold
-    keep_subset = seqsat_subset & mito_subset & rbc_subset
+    keep_subset = seqsat_subset & mito_subset & rbc_subset & gene_subset & count_subset
     adata_qc._inplace_subset_obs(keep_subset)
 
     adata.obs["qc_fail_seqsat"] = ~seqsat_subset
