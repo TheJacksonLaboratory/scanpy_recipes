@@ -72,6 +72,25 @@ class AnalysisConfig(object):
             return self.read(fin.read())
 
 
+def parse_10x_metrics(metrics_file):
+    if not os.path.exists(metrics_file):
+        return dict()
+
+    metrics = pd.read_csv(metrics_file, header=0).T
+    alignment = metrics.index.str.startswith("Reads Mapped")
+    sequencing = metrics.index.str.startswith("Q30")
+    important = metrics.index.str.contains("per Cell") | \
+                metrics.index.str.contains("of Cells")
+    sample_level = ~alignment & ~sequencing & ~important
+
+    return {
+        "alignment": metrics[alignment].to_dict()[0],
+        "sequencing": metrics[sequencing].to_dict()[0],
+        "important": metrics[important].to_dict()[0],
+        "sample": metrics[sample].to_dict()[0],
+    }
+
+
 def load_10x_data(sample_name: str, config: AnalysisConfig):
     """
     Parameters
@@ -114,9 +133,7 @@ def load_10x_data(sample_name: str, config: AnalysisConfig):
         adata.obs.loc[seqsat.index, 'sequencing_saturation'] = seqsat['saturation'].values
 
     metrics_file = os.path.join(input_dir, "metrics_summary.csv")
-    if os.path.exists(metrics_file):
-        metrics = pd.read_csv(metrics_file, header=0)
-        adata.uns["sequencing_metrics"] = metrics.to_dict(orient="index")[0]
+    adata.uns["10x_metrics"] = parser_10x_metrics(metrics_file)
 
     adata.uns['sampleid'] = sample_name
     adata.uns['genome'] = genome
