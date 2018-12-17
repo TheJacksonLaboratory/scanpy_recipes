@@ -87,7 +87,7 @@ def parse_10x_metrics(metrics_file):
         "alignment": metrics[alignment].to_dict()[0],
         "sequencing": metrics[sequencing].to_dict()[0],
         "important": metrics[important].to_dict()[0],
-        "sample": metrics[sample].to_dict()[0],
+        "sample": metrics[sample_level].to_dict()[0],
     }
 
 
@@ -133,7 +133,7 @@ def load_10x_data(sample_name: str, config: AnalysisConfig):
         adata.obs.loc[seqsat.index, 'sequencing_saturation'] = seqsat['saturation'].values
 
     metrics_file = os.path.join(input_dir, "metrics_summary.csv")
-    adata.uns["10x_metrics"] = parser_10x_metrics(metrics_file)
+    adata.uns["10x_metrics"] = parse_10x_metrics(metrics_file)
 
     adata.uns['sampleid'] = sample_name
     adata.uns['genome'] = genome

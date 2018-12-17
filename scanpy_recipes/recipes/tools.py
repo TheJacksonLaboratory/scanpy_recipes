@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from sklearn import metrics
 from scipy.stats import wilcoxon
-from scanpy.api.logging as logg
+import scanpy.api.logging as logg
 from scanpy.tools.leiden import leiden
 from scanpy.tools.louvain import louvain
 
