@@ -1,0 +1,16 @@
+<div>
+  <h2>Sample ID</h2>
+  <h2>{{ adata.uns["sampleid"] }}</h2>
+  {% if adata.uns["sample_name"] %}
+  <h2>Sample Name</h2>
+  <h2>{{ adata.uns["sample_name"] }}</h2>
+  {% endif %}
+  <h2>Customer</h2>
+  <h2>{{ adata.uns["customer_name"] }}</h2>
+  <h2>Analyst</h2>
+  <h2>{{ adata.uns["analyst_name"] }}</h2>
+  <h2>Date generated</h2>
+  <h2>{{ adata.uns["date_created"] }}</h2>
+  <h2>Analysis version</h2>
+  <h2>{{ adata.uns["analysis_version"] }}</h2>
+</div>

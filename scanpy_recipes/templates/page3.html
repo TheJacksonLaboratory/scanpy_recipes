@@ -1,0 +1,24 @@
+<div>
+  <img src="{{ adata.uns['img']['qc_violin'] }}"
+    alt="Violin plots of QC metrics." />
+</div>
+<div>
+  <img src="{{ adata.uns['img']['gene_umi_scatter'] }}"
+    alt="Gene vs UMI scatter plots colored by QC metrics." />
+</div>
+<div>
+  <p>
+    After QC, the cell-gene matrix contains {{cells}} cells and {{genes}} genes.
+
+    <ol>
+      <li>{{low_count_genes_removed}} were removed due to too few counts.</li>
+      <li>{{cells_removed}} were removed due to several factors.
+      <ul>
+        <li>{{low_count_cells_removed}} were removed due to low UMI and gene counts.</li>
+        <li>{{red_blood_cells_removed}} were removed due to high counts of hemoglobin markers.</li>
+        <li>{{high_mtrna_cells_removed}} were removed due to high mtRNA content.</li>
+        <li>{{low_sequencing_saturation_cells_removed}} were removed due to low per-cell sequencing saturation.</li>
+      </ul></li>
+    </ol>
+  </p>
+</div>
