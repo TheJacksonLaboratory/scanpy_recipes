@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+import scanpy.api.logging as logg
 from scanpy.preprocessing import simple as pp
 from scanpy.preprocessing.bbknn import bbknn
 from scanpy.neighbors import neighbors
@@ -52,10 +53,17 @@ def dimensionality_reduction(
         neighbors(adata_filt, n_neighbors=n_neighbors, metric=metric)
 
     adata_filt.uns["neighbors"]["params"]["metric"] = metric
-    umap(adata_filt, min_dist=min_dist, n_components=3)
+    umap(adata_filt, min_dist=min_dist, n_components=2)
+    adata_filt.obsm["X_umap_2d"] = adata_filt.obsm["X_umap"].copy()
+    init_pos = "spectral" if not match else "X_umap_2d"
+    umap(adata_filt, min_dist=min_dist, n_components=3, init_pos=init_pos)
+
+    # shift annotations
     adata_filt.obsm["X_umap_3d"] = adata_filt.obsm["X_umap"].copy()
-    init_pos = "spectral" if not match else "X_umap_3d"
-    umap(adata_filt, min_dist=min_dist, n_components=2, init_pos=init_pos)
+    adata_filt.obsm["X_umap"] = adata_filt.obsm["X_umap_2d"].copy()
+    del adata_filt.obsm["X_umap_2d"]
+    logg.info("2D UMAP available at `.obsm['X_umap']`")
+    logg.info("3D UMAP available at `.obsm['X_umap_3d']`")
 
 
 __api_objects__ = {
