@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore")
+
 import scanpy.api as sc
 from .read_write import __api_objects__ as read_write_api
 from .recipes import preprocess, qc, tools
