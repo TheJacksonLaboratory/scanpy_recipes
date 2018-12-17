@@ -24,6 +24,7 @@ def cluster(adata_filt, resolution=1.0, key_added="cluster", use_louvain=False):
         leiden(adata_filt, resolution=resolution, key_added=key_added)
 
     shift_clusters(adata_filt, key_added)
+    order_clusters(adata_filt, key_added)
 
 
 def subcluster(adata_filt, cluster, resolution=0.4, cluster_key="cluster"):
@@ -120,7 +121,7 @@ def find_marker_genes(adata, cluster_key="cluster", log_fold_change=1.0):
     markers = pd.concat(auc_scores)
     markers = markers.reindex(columns=["gene_name", "AUROC", "avg_diff", cluster_key])
     markers = markers.reset_index(drop=True)
-    adata.uns["auroc_markers"] = markers
+    adata.uns["auroc_markers"] = markers.to_records(index=False)
 
     return markers
 
