@@ -11,6 +11,7 @@ import anndata
 from scanpy.readwrite import read_10x_h5
 from scanpy.readwrite import read as scread, write as scwrite
 from scanpy.preprocessing.simple import normalize_per_cell, log1p
+import scanpy.api.logging as logg
 
 from .utils import datestamp, timestamp, shift_metadata, silence, quantile_limit
 from .qsub import submit_rds_job
@@ -102,9 +103,9 @@ def load_10x_data(sample_name: str, config: AnalysisConfig):
         h5_file = os.path.join(input_dir, h5s[1])
 
     genome = config["genomes"][sample_name]
-    with silence():
-        adata = read_10x_h5(h5_file, genome)
-        adata.var_names_make_unique()
+    adata = read_10x_h5(h5_file, genome)
+    adata.var_names_make_unique()
+    logg.warn("Ran `.var_names_make_uique()` for you.")
 
     adata.obs['sequencing_saturation'] = np.nan
     seqsat_file = os.path.join(input_dir, "sequencing_saturation.csv")
@@ -223,7 +224,7 @@ def save_adata_to_rds(adata, cluster_key="cluster", aggr=False, n_dims=3):
         outname = f"{sampleid}_{out_type}.csv"
         outfile = os.path.join(outdir, outname)
         data.to_csv(outfile)
-        print(f"Saved {out_type} to {outfile}.")
+        logg.info(f"Saved {out_type} to {outfile}.")
 
     submit_rds_job(sampleid, outdir, f"{sampleid}_{datestamp()}.Rds")
 
@@ -236,7 +237,7 @@ def export_markers(adata, cluster_key):
     csvfile = os.path.join(adata.uns["output_dir"], csvname)
     markers = pd.DataFrame.from_records(adata.uns["auroc_markers"])
     markers.to_csv(csvfile)
-    print(f"CSV file saved to [{csvfile}].")
+    logg.info(f"CSV file saved to [{csvfile}].")
 
     with pd.ExcelWriter(excelfile) as writer:
         for cluster in markers[cluster_key].unique():
@@ -244,14 +245,14 @@ def export_markers(adata, cluster_key):
             name = f"Cluster {cluster}"
             markers.loc[inds].to_excel(writer, name)
         writer.save()
-    print(f"Excel file saved to [{excelfile}].")
+    logg.info(f"Excel file saved to [{excelfile}].")
 
 
 def save_adata(obj, suffix):
     outname = f"{obj.uns['sampleid']}-{suffix}_{datestamp()}.h5ad"
     outfile = os.path.join(obj.uns["output_dir"], outname)
 
-    print(f"Saving {outname} to {obj.uns['output_dir']}.")
+    logg.info(f"Saving {outname} to {obj.uns['output_dir']}.")
     scwrite(outfile, obj)
 
     return outfile
@@ -265,7 +266,6 @@ def save_all_adata():
         for object_name in adata_objects:
             suffix = object_name.split("_")[1]
             obj = objects[object_name]
-            #obj = getattr(objects, object_name)()
             save_adata(obj, suffix)
     finally:
         del frame
@@ -275,7 +275,7 @@ def save_loom(adata):
     outname = f"{obj.uns['sampleid']}_{datestamp()}.loom"
     outfile = os.path.join(obj.uns["output_dir"], outname)
 
-    print(f"Saving {outname} to {obj.uns['output_dir']}.")
+    logg.info(f"Saving {outname} to {obj.uns['output_dir']}.")
     adata.write_loom(outfile)
 
     return outfile
