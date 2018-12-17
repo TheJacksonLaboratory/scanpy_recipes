@@ -147,7 +147,7 @@ def genes_umis_scatter(adata_trial):
     keys = sorted(filter(lambda s: not s.startswith("qc") and not s.startswith("n_"), adata_trial.obs_keys()))
     L = len(keys) + 1
 
-    fig, axs = plt.subplots(1, L, figsize=(L*4, 3))
+    fig, axs = plt.subplots(2, L//2, figsize=(L*4//2, 2*3))
     for ax, key in zip(axs.flatten(), keys):
         _scat(fig, ax, adata_trial, key)
     redblue = sns.blend_palette([sns.xkcd_rgb["light red"], "0.9"], 2, as_cmap=True)
