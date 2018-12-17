@@ -122,7 +122,10 @@ def find_marker_genes(adata, cluster_key="cluster", log_fold_change=1.0):
     markers = pd.concat(auc_scores)
     markers = markers.reindex(columns=["gene_name", "AUROC", "avg_diff", cluster_key])
     markers = markers.reset_index(drop=True)
-    adata.uns["auroc_markers"] = markers.to_records(index=False)
+    #adata.uns["auroc_markers"] = markers.to_records(index=False)
+    # recarrays with different dtypes don't play nice with h5 reading/writing
+    # instead lets try just a column-based key:list dictionary
+    adata.uns["auroc_markers"] = markers.to_dict(orient="list")
 
     return markers
 

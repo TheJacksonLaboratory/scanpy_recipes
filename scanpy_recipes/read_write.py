@@ -229,13 +229,21 @@ def save_adata_to_rds(adata, cluster_key="cluster", aggr=False, n_dims=3):
     submit_rds_job(sampleid, outdir, f"{sampleid}_{datestamp()}.Rds")
 
 
-def export_markers(adata, cluster_key):
+def get_marker_dataframe(adata, marker_key="auroc_markers"):
+    return pd.DataFrame.from_dict(adata.uns[marker_key])
+
+
+def export_markers(adata, cluster_key, marker_key="auroc_markers"):
     excelname = f"{adata.uns['sampleid']}_markers_{datestamp()}.xlsx"
     excelfile = os.path.join(adata.uns["output_dir"], excelname)
 
     csvname = f"{adata.uns['sampleid']}_markers_{datestamp()}.csv"
     csvfile = os.path.join(adata.uns["output_dir"], csvname)
-    markers = pd.DataFrame.from_records(adata.uns["auroc_markers"])
+
+    #markers = pd.DataFrame.from_records(adata.uns["auroc_markers"])
+    markers = get_marker_dataframe(adata, marker_key)
+    markers[cluster_key] = markers[cluster_key].astype(int)
+
     markers.to_csv(csvfile)
     logg.info(f"CSV file saved to [{csvfile}].")
 
@@ -291,4 +299,5 @@ __api_objects__ = {
     "save_loom": save_loom,
     "load_10x_data": load_10x_data,
     "export_markers": export_markers,
+    "get_marker_dataframe": get_marker_dataframe,
 }
