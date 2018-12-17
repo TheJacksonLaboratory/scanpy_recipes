@@ -105,7 +105,7 @@ def load_10x_data(sample_name: str, config: AnalysisConfig):
     genome = config["genomes"][sample_name]
     adata = read_10x_h5(h5_file, genome)
     adata.var_names_make_unique()
-    logg.warn("Ran `.var_names_make_uique()` for you.")
+    logg.info("Ran `.var_names_make_unique()` for you.")
 
     adata.obs['sequencing_saturation'] = np.nan
     seqsat_file = os.path.join(input_dir, "sequencing_saturation.csv")

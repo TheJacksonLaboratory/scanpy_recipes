@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from sklearn import metrics
 from scipy.stats import wilcoxon
+from scanpy.api.logging as logg
 from scanpy.tools.leiden import leiden
 from scanpy.tools.louvain import louvain
 
@@ -50,7 +51,7 @@ def subcluster(adata_filt, cluster, resolution=0.4, cluster_key="cluster"):
     all_new_clusters = adata_filt.obs[key_added].cat.categories
     just_new_clusters = all_new_clusters[all_new_clusters.str.startswith(cluster)]
     if len(just_new_clusters) == 1:
-        print(f"Wasn't able to subcluster with resolution `{resolution}`].")
+        logg.info(f"Wasn't able to subcluster with resolution `{resolution}`].")
         return
 
     old_max = adata_filt.obs[cluster_key].astype(int).max()
@@ -67,7 +68,7 @@ def subcluster(adata_filt, cluster, resolution=0.4, cluster_key="cluster"):
 
     adata_filt.obs[key_added] = tmp["new"].astype(str).astype("category")
     order_clusters(adata_filt, key_added)
-    print(f"Updated clusters under `adata_redux.obs['{key_added}']`.")
+    logg.info(f"Updated clusters under `adata_redux.obs['{key_added}']`.")
 
 
 def shift_clusters(adata, key):
@@ -116,7 +117,7 @@ def find_marker_genes(adata, cluster_key="cluster", log_fold_change=1.0):
 
         auc_scores.append(tmp)
 
-    print(f"\nComputed markers for {len(clusters)} clusters.")
+    logg.info(f"\nComputed markers for {len(clusters)} clusters.")
 
     markers = pd.concat(auc_scores)
     markers = markers.reindex(columns=["gene_name", "AUROC", "avg_diff", cluster_key])
