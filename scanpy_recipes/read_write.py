@@ -176,31 +176,37 @@ def load_anndata(infile):
 
 
 def save_adata_to_rds(adata, cluster_key="cluster", aggr=False, n_dims=3):
-    tmpd = pd.DataFrame(np.asarray(adata.raw.X.todense()),
-                        index=adata.obs_names,
-                        columns=adata.raw.var_names)
-    tmpd = anndata.AnnData(tmpd, var=adata.raw.var, obs=adata.obs)
+    #tmpd = pd.DataFrame(np.asarray(adata.raw.X.todense()),
+    #                    index=adata.obs_names,
+    #                    columns=adata.raw.var_names)
+    tmpd = anndata.AnnData(np.asarray(adata.raw.X.todense()),
+                           var=adata.raw.var, obs=adata.obs)
 
     # if `.raw` counts aren't normalized, normalize them.
     # if they are, then normalization will return the same values (they're already normalized)
     normalize_per_cell(tmpd)
     log1p(tmpd)
-    counts = pd.DataFrame(tmpd.X, columns=tmpd.var_names, index=tmpd.obs_names).T
+    counts = pd.DataFrame(tmpd.X, columns=tmpd.var.gene_ids.values, index=tmpd.obs_names).T
 
-    features = pd.DataFrame({"Associated.Gene.Name": counts.index, "Chromosome.Name": 1}, index=counts.index)
+    features = pd.DataFrame({"Associated.Gene.Name": tmpd.var.index, "Chromosome.Name": 1}, index=counts.index)
 
     counts.loc["ENSGGENES", :] = quantile_limit(adata.obs, "n_genes")
-    counts.loc["ENSGUMI", :] = quantile_limit(adata.obs, "n_counts")
+    counts.loc["ENSGUMI", :] = quantile_limit(adata.obs, "n_counts_total")
     counts.loc["ENSGMITO", :] = quantile_limit(adata.obs, "percent_mito")
     counts.loc["ENSGSEQSAT", :] = quantile_limit(adata.obs, "sequencing_saturation")
     if aggr:
-        counts.ix["ENSGSAMP"] = adata.obs.batch.cat.codes
-        features.ix["ENSGSAMP"] = ["Sample", 1]
+        counts.loc["ENSGSAMP", :] = adata.obs.batch.cat.codes
+        features.loc["ENSGSAMP", :] = ["Sample", 1]
 
     features.loc["ENSGGENES", :] = ["Genes", 1]
     features.loc["ENSGUMI", :] = ["Umi", 1]
     features.loc["ENSGMITO", :] = ["PercentMito", 1]
     features.loc["ENSGSEQSAT", :] = ["Saturation", 1]
+
+    if "qc_tag" in adata.obs_keys():
+        counts.loc["ENSGHASHTAG", :] = adata.obs["qc_tag"].str.split("_", expand=True).iloc[:,1].astype(float)
+        counts.loc["ENSGHASHTAG", :].fillna(0, inplace=True)
+        features.loc["ENSGHASHTAG", :] = ["Tag", 1]
 
     if n_dims == 3:
         umap = adata.obsm["X_umap_3d"]
@@ -228,7 +234,7 @@ def export_markers(adata, cluster_key):
 
     csvname = f"{adata.uns['sampleid']}_markers_{datestamp()}.csv"
     csvfile = os.path.join(adata.uns["output_dir"], csvname)
-    markers = adata.uns["auroc_markers"]
+    markers = pd.DataFrame.from_records(adata.uns["auroc_markers"])
     markers.to_csv(csvfile)
     print(f"CSV file saved to [{csvfile}].")
 

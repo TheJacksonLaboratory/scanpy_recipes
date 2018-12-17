@@ -6,15 +6,17 @@ SAMPLE_SCRIPT = """
 #PBS -N {sampleid}_rds_creation
 #PBS -o {wd}/{sampleid}_rds_creation.log
 #PBS -j oe
-#PBS -l walltime=00:05:00
+#PBS -l walltime=00:15:00
 #PBS -l nodes=1:ppn=1
 module load R
 
 Rscript - <<eog
 setwd("{wd}")
-log2cpm <- read.csv("{sampleid}_counts.csv")
-tsne.data <- read.csv("{sampleid}_umap3d.csv")
-featuredata <- read.csv("{sampleid}_features.csv")
+options(stringsAsFactors = FALSE, row.names = 1, as.is = T)
+log2cpm <- read.csv("{sampleid}_counts.csv", row.names = 1, stringsAsFactors = FALSE)
+colnames(log2cpm) <- gsub(".", "-", colnames(log2cpm), fixed = T)
+tsne.data <- read.csv("{sampleid}_umap3d.csv", row.names = 1, stringsAsFactors = FALSE)
+featuredata <- read.csv("{sampleid}_features.csv", row.names = 1, stringsAsFactors = FALSE)
 save(log2cpm, featuredata, tsne.data, file="{rdsfile}")
 print("Done")
 eog

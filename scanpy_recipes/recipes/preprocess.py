@@ -10,6 +10,7 @@ from scanpy.tools.louvain import louvain
 
 
 def preprocess(adata_raw, n_top_genes=1000, scale=False):
+    adata_raw.obs["n_counts_total"] = adata_raw.obs["n_counts"].copy()
     adata = pp.normalize_per_cell(adata_raw, copy=True)
     adata.uns["raw_dtype"] = "normalized count"
     adata.raw = adata
