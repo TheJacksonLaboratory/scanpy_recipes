@@ -1,13 +1,15 @@
 <html>
   <head>
-    <title>{{ adata.uns["sampleid"] }} Analysis - JAX Single Cell Biology Lab</html>
+    <title>{{ adata.uns["sampleid"] }} Analysis - JAX Single Cell Biology Lab</title>
     <meta name="author" content="{{ adata.uns['analyst_name'] }}">
     <meta name="description" content="Analysis of {{ adata.uns['sampleid'] }} scRNA-seq for {{ adata.uns['customer_name'] }}">
   </head>
 
   <body>
 
-    {{ html }}
+    {% autoescape false %}
+      {{ html }}
+    {% endautoescape %}
 
   </body>
 </html>

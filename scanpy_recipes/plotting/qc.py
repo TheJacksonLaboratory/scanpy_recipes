@@ -94,7 +94,7 @@ def cut_violin(ax, threshold=0., cut_above=[True, False], colors=["0.9", "r"]):
     cut_verts(ax.collections[2], threshold, cut_above=cut_above[1], color=colors[1])
 
 
-def qc_violins(adata):
+def qc_violins(adata, return_fig=False):
     keys = sorted(filter(lambda s: not s.startswith("qc"), adata.obs_keys()))
     N = len(keys)
 
@@ -121,15 +121,17 @@ def qc_violins(adata):
         ax.set_xticks([])
         ax.set_ylabel("")
         sns.despine(fig, ax)
+
     fig.tight_layout()
 
+    if return_fig:
+        return fig
 
-def genes_umis_scatter(adata_trial):
+
+def genes_umis_scatter(adata_trial, return_fig=False):
     def _scat(fig, ax, adata_trial, key, cmap="Reds", cbar=True, sort_top=True):
         pdata = adata_trial.obs[["n_counts", "n_genes", key]]
-        print(pdata[key].dtype)
         if isinstance(pdata[key].dtype, pd.api.types.CategoricalDtype):
-            print('inside')
             pdata[key] = pdata[key].cat.codes
         pdata = pdata.sort_values(key, ascending=sort_top)
 
@@ -154,6 +156,9 @@ def genes_umis_scatter(adata_trial):
     _scat(fig, axs.flatten()[-1], adata_trial, "qc_fail", cmap=redblue, cbar=False, sort_top=False)
 
     fig.tight_layout()
+
+    if return_fig:
+        return fig
 
 
 __api_objects__ = {

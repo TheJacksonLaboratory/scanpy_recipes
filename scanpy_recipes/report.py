@@ -1,15 +1,26 @@
 import io
+import os
 import base64
 from jinja2 import Environment, PackageLoader, select_autoescape
+from subprocess import check_call
 import matplotlib.pyplot as plt
+
+import scanpy.api.logging as logg
+
+from .utils import datestamp
 
 
 def fig_to_bytes(fig):
     bytesio = io.BytesIO()
-    plt.savefig(bytesio, format="png")
+    fig.savefig(bytesio, format="png")
     bytesio.seek(0)
-    encoded = base64.b64encode(bytesio.read())
+    encoded = base64.b64encode(bytesio.read()).decode("ascii")
     return encoded
+
+
+def _get_output_file(adata, ext="html"):
+    outname = f"{adata.uns['sampleid']}_{datestamp()}_report.{ext}"
+    return os.path.join(adata.uns["output_dir"], outname)
 
 
 class SCBLReport(object):
@@ -17,7 +28,7 @@ class SCBLReport(object):
     MAX_PAGE = 5
     def __init__(self, ):
         self.env = Environment(
-            PackageLoader("scanpy_recipes", "templates"),
+            loader=PackageLoader("scanpy_recipes", "templates"),
             autoescape=select_autoescape(['html']),
             trim_blocks=True,
             lstrip_blocks=True
@@ -27,13 +38,38 @@ class SCBLReport(object):
         template = self.env.get_template(f"page{n}.html")
         return template.render(adata=adata)
 
+
     def generate_report(self, adata):
         report_template = self.env.get_template("report.html")
         pages = [self._render_page(adata, n)
                  for n in range(self.MIN_PAGE, self.MAX_PAGE + 1)]
 
-        report = report_template.render(html="\n".join(pages))
-        return report
+        html_report = report_template.render(
+            adata=adata,
+            html="\n".join(pages)
+        )
+
+        report_file = _get_output_file(adata, ext="html")
+        with open(report_file, "w") as htmlout:
+            htmlout.write(html_report)
+        logg.info(f"HTML report saved to [{report_file}].")
+
+        self.html_report = html_report
+
+    def generate_pdf(self):
+        report_file = _get_output_file(adata, ext="pdf")
+
+        html_file = _get_output_file(adata, ext="html")
+        pdf_file = _get_output_file(adata, ext="pdf")
+        cmd = ["pandoc", "-f", "html", "-t", "latex", "+RTS", "-K512m", "-RTS", "-o",
+                pdf_file, html_file]
+        try:
+            check_call(cmd)
+        except Exception as e:
+            logg.error(e.msg)
+        finally:
+            logg.info(f"PDF report saved to [{pdf_file}].")
+
 
 __api_objects__ = {
     "SCBLReport": SCBLReport,
