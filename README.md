@@ -68,7 +68,7 @@ pip install -e .
 
 ## Contributing
 
-Please read [CONTRIBUTING.md][CONTRIBUTING.md] for details on our code of conduct, and the
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the
 process for submitting pull requests to us.
 
 ## Authors
@@ -78,7 +78,7 @@ process for submitting pull requests to us.
 ## License
 
 Since this package extends [`scanpy`][scanpy], this work is under the same BSD-3 license.
-See [LICENSE][LICENSE] for more details.
+See [LICENSE](LICENSE) for more details.
 
 
 [anndata]: github.com/theislab/anndata
