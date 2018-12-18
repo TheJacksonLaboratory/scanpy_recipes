@@ -20,7 +20,7 @@ There are three main aims of the additional functions of `scanpy_recipes`:
 
 Specifically, `scanpy` is normally loaded using `import scanpy.api as sc`. Instead, this
 package provides this api object as
-````{python}
+```{python}
 from scanpy_recipes.api import sc
 ```
 This is the same `scanpy.api` object, does not change any `scanpy` functionality, and only
