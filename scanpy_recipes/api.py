@@ -35,3 +35,5 @@ sc.settings.verbosity = 3
 
 del read_write_api, report_api
 del preprocess, qc, tools, plqc
+
+sc.logging.print_version_and_date()
