@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 from pathlib import Path
-import versioneer
+#import versioneer
 
 package_name = 'scanpy_recipes'
 
@@ -15,8 +15,8 @@ author = 'Bill Flynn'
 
 setup(
     name=package_name,
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    version="0.1",#versioneer.get_version(),
+    #cmdclass=versioneer.get_cmdclass(),
     description='Generalized and aggregated analysis functions for working with Anndata and Scanpy',
     long_description=readme,
     url='http://github.com/TheJacksonLaboratory/scanpy_recipes',
