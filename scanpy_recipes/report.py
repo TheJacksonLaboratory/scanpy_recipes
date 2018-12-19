@@ -55,19 +55,17 @@ class SCBLReport(object):
         logg.info(f"HTML report saved to [{report_file}].")
 
         self.html_report = html_report
+        self.html_file = report_file
 
     def generate_pdf(self):
-        report_file = _get_output_file(adata, ext="pdf")
-
-        html_file = _get_output_file(adata, ext="html")
-        pdf_file = _get_output_file(adata, ext="pdf")
+        pdf_file = f"{os.path.splitext(self.html_file)[0]}.pdf"
         cmd = ["pandoc", "-f", "html", "-t", "latex", "+RTS", "-K512m", "-RTS", "-o",
-                pdf_file, html_file]
+                pdf_file, self.html_file]
         try:
             check_call(cmd)
         except Exception as e:
-            logg.error(e.msg)
-        finally:
+            logg.error(e)
+        else:
             logg.info(f"PDF report saved to [{pdf_file}].")
 
 
