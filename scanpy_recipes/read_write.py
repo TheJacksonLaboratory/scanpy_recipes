@@ -49,10 +49,10 @@ class AnalysisConfig(object):
             for key, value in config.items():
                 assert self.placeholder_prefix not in key
                 assert self.placeholder_prefix not in value
-        sample_names = set(config["sample_names"].keys())
+        sample_ids = set(config["sample_names"].keys())
         for section in self.required_sections:
             if section in ("names", "species"): continue
-            assert sample_names - set(config[section].keys()) == set()
+            assert sample_ids - set(config[section].keys()) == set()
         return config
 
 
@@ -126,26 +126,29 @@ def load_10x_data(sample_name: str, config: AnalysisConfig):
     adata.var_names_make_unique()
     logg.info("Ran `.var_names_make_unique()` for you.")
 
-    adata.obs['sequencing_saturation'] = np.nan
+    adata.obs["sequencing_saturation"] = np.nan
     seqsat_file = os.path.join(input_dir, "sequencing_saturation.csv")
     if os.path.exists(seqsat_file):
         seqsat = pd.read_csv(seqsat_file, index_col=0, header=0)
-        adata.obs.loc[seqsat.index, 'sequencing_saturation'] = seqsat['saturation'].values
+        adata.obs.loc[seqsat.index, "sequencing_saturation"] = seqsat["saturation"].values
 
     metrics_file = os.path.join(input_dir, "metrics_summary.csv")
     adata.uns["10x_metrics"] = parse_10x_metrics(metrics_file)
 
-    adata.uns['sampleid'] = sample_name
-    adata.uns['genome'] = genome
-    adata.uns['species'] = config["species"][genome]
+    adata.uns["sampleid"] = sample_name
+    customer_sample_name = config["sample_names"].get(sample_name, None)
+    if customer_sample_name:
+        adata.uns["sample_name"] = customer_sample_name
+    adata.uns["genome"] = genome
+    adata.uns["species"] = config["species"][genome]
 
-    adata.uns['analyst'] = config["names"]["analyst_name"]
-    adata.uns['customer_name'] = config["names"]["customer_name"]
-    adata.uns['analysis_version'] = 1
-    adata.uns['date_created'] = datestamp()
-    adata.uns['input_file'] = os.path.abspath(h5_file)
-    adata.uns['input_dir'] = os.path.abspath(input_dir)
-    adata.uns['output_dir'] = os.path.abspath(output_dir)
+    adata.uns["analyst"] = config["names"]["analyst_name"]
+    adata.uns["customer_name"] = config["names"]["customer_name"]
+    adata.uns["analysis_version"] = 1
+    adata.uns["date_created"] = datestamp()
+    adata.uns["input_file"] = os.path.abspath(h5_file)
+    adata.uns["input_dir"] = os.path.abspath(input_dir)
+    adata.uns["output_dir"] = os.path.abspath(output_dir)
 
     return adata
 
