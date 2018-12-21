@@ -4,7 +4,7 @@ warnings.filterwarnings("ignore")
 import scanpy.api as sc
 from .read_write import __api_objects__ as read_write_api
 from .report import __api_objects__ as report_api
-from .recipes import preprocess, qc, tools
+from .recipes import aggregate, preprocess, qc, tools
 from .plotting import qc as plqc
 from .plotting.rcmod import update_figure_params
 
@@ -14,7 +14,10 @@ for object_key, object_ in read_write_api.items():
 for object_key, object_ in report_api.items():
     sc.__dict__[object_key] = object_
 
-sc.processing = preprocess
+for object_key, object_ in aggregate.__api_objects__.items():
+    sc.__dict__[object_key] = object_
+
+#sc.processing = preprocess
 sc.qc = qc
 
 for object_key, object_ in qc.__api_objects__.items():
