@@ -28,13 +28,13 @@ def aggregate(*adatas, combined_output_dir=None,
 
     sampleids = [adata.uns["sampleid"] for adata in adatas]
     combined.obs["sampleid"] = combined.obs.batch.map(
-        dict(zip(range(len(sampleids)), sampleids))
+        dict(zip(combined.obs.batch.cat.categories, sampleids))
     )
 
     sample_names = [adata.uns.get("sample_name", None) for adata in adatas]
     if any(filter(None, sample_names)):
         combined.obs["sample_name"] = combined.obs.batch.map(
-            dict(zip(range(len(sampleids)), sample_names))
+            dict(zip(combined.obs.batch.cat.categories, sample_names))
         )
 
     if not combined_sampleid:
@@ -51,9 +51,9 @@ def aggregate(*adatas, combined_output_dir=None,
 
     combined.var["gene_ids"] = combined.var["gene_ids-0"]
     n_counts_cols = [k for k in combined.var_keys() if k.startswith("n_counts")]
-    combined.var["n_counts"] = combined.var[n_counts_cols].sum()
+    combined.var["n_counts"] = combined.var[n_counts_cols].sum(axis=1)
     n_cells_cols = [k for k in combined.var_keys() if k.startswith("n_cells")]
-    combined.var["n_cells"] = combined.var[n_cells_cols].sum()
+    combined.var["n_cells"] = combined.var[n_cells_cols].sum(axis=1)
 
     # I guess you might be interested in knowing, for example, how many counts you have
     # for each gene coming from each sample
