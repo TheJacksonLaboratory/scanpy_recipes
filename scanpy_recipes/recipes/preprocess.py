@@ -42,7 +42,7 @@ def dimensionality_reduction(
     pp.pca(adata_filt, n_comps=n_comps, svd_solver="arpack")
 
     if is_aggregation:
-        n_batches = len(adata.obs["batch"].unique())
+        n_batches = len(adata_filt.obs["batch"].unique())
         bbknn(
             adata_filt,
             metric="angular",
