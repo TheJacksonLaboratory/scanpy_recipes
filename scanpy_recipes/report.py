@@ -1,6 +1,7 @@
 import io
 import os
 import base64
+import pkg_resources
 from jinja2 import Environment, PackageLoader, select_autoescape
 from subprocess import check_call
 import matplotlib.pyplot as plt
@@ -23,9 +24,21 @@ def _get_output_file(adata, ext="html"):
     return os.path.join(adata.uns["output_dir"], outname)
 
 
+def _load_css():
+    css_filename = pkg_resources.resource_filename("scanpy_recipes", "static/bootstrap.min.css")
+    try:
+        with open(css_filename, "r") as fin:
+            css = fin.read()
+    except Exception as e:
+        print(e)
+        css = ""
+    return css
+
+
 class SCBLReport(object):
     MIN_PAGE = 1
-    MAX_PAGE = 5
+    MAX_PAGE = 6
+
     def __init__(self, ):
         self.env = Environment(
             loader=PackageLoader("scanpy_recipes", "templates"),
@@ -33,6 +46,7 @@ class SCBLReport(object):
             trim_blocks=True,
             lstrip_blocks=True
         )
+
 
     def _render_page(self, adata, n):
         template = self.env.get_template(f"page{n}.html")
@@ -46,6 +60,7 @@ class SCBLReport(object):
 
         html_report = report_template.render(
             adata=adata,
+            css=_load_css(),
             html="\n".join(pages)
         )
 

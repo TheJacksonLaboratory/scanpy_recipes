@@ -1,0 +1,187 @@
+html {
+  height: 100%;
+}
+
+body {
+  margin: 0 auto;
+  font-family: Roboto, sans-serif;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+app-root {
+  flex: 1 0 auto;
+}
+
+a {
+  text-decoration: none;
+  color: #0277BD;
+}
+
+p.large { font-size: 1.15em; }
+
+.subdued { color: #555; }
+
+/* Margin classes */
+.top-margin-1 { margin-top: 1em; }
+
+.top-margin-2 { margin-top: 2em; }
+
+.bottom-margin-1 { margin-bottom: 1em; }
+
+.bottom-margin-2 { margin-bottom: 2em; }
+
+.right-margin-1 { margin-right: 1em; }
+
+.right-margin-2 { margin-right: 2em; }
+
+.left-margin-1 { margin-left: 1em; }
+
+.left-margin-2 { margin-left: 2em; }
+
+.left-margin-4 { margin-left: 4em; }
+
+.margin-1 { margin: 1em; }
+
+.margin-2 { margin: 2em }
+
+.x-margin-1 { margin: 0 1em; }
+
+.x-margin-2 { margin: 0 2em; }
+
+.y-margin-1 { margin: 1em 0; }
+
+.y-margin-2 { margin: 2em 0; }
+
+/* Width classes */
+.w-5 { width: 5%; }
+
+.w-10 { width: 10%; }
+
+.w-20 { width: 20%; }
+
+.w-25 { width: 25% }
+
+.w-30 { width: 30%; }
+
+.w-40 { width: 40%; }
+
+.w-45 { width: 45%; }
+
+.w-50 { width: 50%; }
+
+.w-60 { width: 60%; }
+
+.w-70 { width: 70%; }
+
+.w-75 { width: 75%; }
+
+.w-80 { width: 80%; }
+
+.w-90 { width: 90%; }
+
+.w-100 { width: 100%; }
+
+.w-auto { width: auto; }
+
+.one-third-width { width: 30.5%; }
+
+.two-thirds-width { width: 58%; }
+
+/* Height classes */
+.h-50 { height: 50px; }
+
+/* Aligning classes */
+.right { float: right; }
+
+.left { float: left; }
+
+.block { display: block; }
+
+.absolute { position: absolute; }
+
+.align-left { text-align: left; }
+
+.align-center { text-align: center; }
+
+.align-right { text-align: right; }
+
+.align-justified { text-align: justify; }
+
+.flex {
+  display: flex !important;
+}
+
+/* Global styling */
+.mat-card {
+  text-align: center;
+  justify-content: center;
+  overflow: auto;
+}
+
+.container {
+  margin: 3em auto;
+  padding: 0 3em;
+  display: flex;
+  justify-content: space-evenly;
+}
+
+.adjust-horiz {
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+.auto-adjust-horiz { width: 100%; }
+
+@media (max-width: 1150px) {
+  .adjust-horiz { flex-direction: row; }
+
+  .auto-adjust-horiz { width: 45%; }
+
+  .adjust-vert { flex-direction: column; }
+
+  .auto-adjust-vert { width: 100%; }
+}
+
+.mat-form-field-prefix .mat-icon {
+  font-size: 125% !important;
+  margin-bottom: -5px;
+}
+
+.mat-form-field-label-wrapper {
+  top: -1.1em;
+  margin-left: 1em;
+}
+
+.close { margin-top: -20px !important; }
+
+.mat-tooltip {
+  font-size: 12px !important;
+}
+
+.checklist-leaf-node .mat-checkbox-layout {
+  width: 100%;
+  overflow: hidden;
+}
+
+.checklist-leaf-node .mat-checkbox-label {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+footer {
+  flex-shrink: 0;
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  color: #05396b;
+  background-color: #BBDEFB;
+}
+
+/* Override for some odd style that adds 8px margin
+to the left of the title, thus off-centering it */
+.mat-card-header-text {
+  margin: 0 !important;
+}

@@ -3,13 +3,29 @@
     <title>{{ adata.uns["sampleid"] }} Analysis - JAX Single Cell Biology Lab</title>
     <meta name="author" content="{{ adata.uns['analyst_name'] }}">
     <meta name="description" content="Analysis of {{ adata.uns['sampleid'] }} scRNA-seq for {{ adata.uns['customer_name'] }}">
+    <style>
+      {{ css }}
+      td:first-child {
+        text-align: left;
+      }
+      td {
+        text-align: right;
+      }
+      tr {
+        width: 100%;
+        border-bottom: 1px;
+      }
+      table {
+        width: 100%;
+      }
+    </style>
   </head>
 
   <body>
-
-    {% autoescape false %}
-      {{ html }}
-    {% endautoescape %}
-
+    <div class="container">
+      {% autoescape false %}
+        {{ html }}
+      {% endautoescape %}
+    </div>
   </body>
 </html>

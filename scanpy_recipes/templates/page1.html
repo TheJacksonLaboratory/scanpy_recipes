@@ -1,28 +1,46 @@
-<div>
-  <tr>
-    <td>Sample ID</td>
-    <td>{{ adata.uns["sampleid"] }}</td>
-  </tr>
-  {% if adata.uns["sample_name"] %}
-  <tr>
-    <td>Sample Name</td>
-    <td>{{ adata.uns["sample_name"] }}</td>
-  </tr>
-  {% endif %}
-  <tr>
-    <td>Customer</td>
-    <td>{{ adata.uns["customer_name"] }}</td>
-  </tr>
-  <tr>
-    <td>Analyst</td>
-    <td>{{ adata.uns["analyst_name"] }}</td>
-  </tr>
-  <tr>
-    <td>Date generated</td>
-    <td>{{ adata.uns["date_created"] }}</td>
-  </tr>
-  <tr>
-    <td>Analysis version</td>
-    <td>{{ adata.uns["analysis_version"] }}</td>
-  </tr>
+<div class="row">
+  <div class="col border border-dark rounded m-2 p-1">
+    <div class="row">
+      <div class="col m-2">
+        <table>
+          <tr>
+            <th>Sample ID</td>
+            <td>{{ adata.uns["sampleid"] }}</td>
+          </tr>
+          {% if adata.uns["sample_name"] %}
+          <tr>
+            <th>Sample Name</td>
+            <td>{{ adata.uns["sample_name"] }}</td>
+          </tr>
+          {% endif %}
+        </table>
+      </div>
+
+      <div class="col m-2">
+        <table>
+          <tr>
+            <th>Customer</td>
+            <td>{{ adata.uns["customer_name"] }}</td>
+          </tr>
+          <tr>
+            <th>Analyst</td>
+            <td>{{ adata.uns["analyst"] }}</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="col m-2">
+        <table>
+          <tr>
+            <th>Date generated</td>
+            <td>{{ adata.uns["date_created"] }}</td>
+          </tr>
+          <tr>
+            <th>Analysis version</td>
+            <td>{{ adata.uns["analysis_version"] }}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>
