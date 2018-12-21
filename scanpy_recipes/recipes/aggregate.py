@@ -46,7 +46,7 @@ def aggregate(*adatas, combined_output_dir=None,
             os.path.dirname(adatas[0].uns["output_dir"]),
             f"{combined_sampleid}_outputs"
         )
-    if make_output_dir:
+    if make_output_dir and not os.path.exists(combined_output_dir):
         os.mkdir(combined_output_dir)
 
     combined.var["gene_ids"] = combined.var["gene_ids-0"]
