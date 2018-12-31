@@ -1,7 +1,26 @@
 <div class="row">
   <div class="col m-2 p-1 border border-dark rounded">
+    <h2>Dimensionality reduction and clustering</h2>
     <div class="row">
       <div class="col">
+        <p>
+          The expression profiles of each cell at the {{ adata.uns["n_top_genes"] }} most
+          highly variable genes (as measured by dispersion
+          [<a target="_blank" href="https://doi.org/10.1038/nbt.3192">Satija et al., 2015</a>]
+          [<a target="_blank" href="https://doi.org/10.1038/ncomms14049">Zheng et al., 2017</a>])
+          were used for neighborhood graph generation (using
+          {{ adata.uns["neighbors"]["params"]["n_neighbors"] }} nearest-neighbors)
+          and dimensionality reduction with UMAP
+          [<a target="_blank" href="https://arxiv.org/abs/1802.03426">McInnes et al., 2018</a>].
+          Clustering was performed on this neighborhood graph using the Leiden community
+          detection algorithm
+          [<a target="_blank" href="https://arxiv.org/abs/1810.08473">Traag et al., 2018</a>].
+          Subclustering was performed ad hoc on a per-cluster basis to separate visually
+          distinct subpopulations of cells.
+        </p>
+        <p>
+          Preliminary clustering is shown below.
+        </p>
         <img class="mx-auto d-block"
           src="data:image/png;base64,{{ adata.uns['img']['clusters'] }}"
           alt="UMAP embedding and community-based clustering"
