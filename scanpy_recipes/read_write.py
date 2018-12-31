@@ -196,7 +196,7 @@ def load_anndata(infile):
     return adata
 
 
-def save_adata_to_rds(adata, cluster_key="cluster", aggr=False, n_dims=3):
+def save_adata_to_rds(adata, cluster_key="cluster", n_dims=3):
     #tmpd = pd.DataFrame(np.asarray(adata.raw.X.todense()),
     #                    index=adata.obs_names,
     #                    columns=adata.raw.var_names)
@@ -215,7 +215,7 @@ def save_adata_to_rds(adata, cluster_key="cluster", aggr=False, n_dims=3):
     counts.loc["ENSGUMI", :] = quantile_limit(adata.obs, "n_counts_total")
     counts.loc["ENSGMITO", :] = quantile_limit(adata.obs, "percent_mito")
     counts.loc["ENSGSEQSAT", :] = quantile_limit(adata.obs, "sequencing_saturation")
-    if aggr:
+    if adata.uns.get("is_aggregation", None):
         counts.loc["ENSGSAMP", :] = adata.obs.batch.cat.codes
         features.loc["ENSGSAMP", :] = ["Sample", 1]
 

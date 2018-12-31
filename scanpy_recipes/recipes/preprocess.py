@@ -36,12 +36,11 @@ def dimensionality_reduction(
     n_neighbors=10,
     min_dist=0.5,
     metric="correlation",
-    is_aggregation=False,
     match=False,
 ):
     pp.pca(adata_filt, n_comps=n_comps, svd_solver="arpack")
 
-    if is_aggregation:
+    if adata_filt.uns.get("is_aggregation", None):
         n_batches = len(adata_filt.obs["batch"].unique())
         bbknn(
             adata_filt,
