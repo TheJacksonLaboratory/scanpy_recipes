@@ -11,6 +11,29 @@ def _combine_uns_data(adatas, key):
         comb_uns[sampleid] = obj
     return comb_uns
 
+
+def _fix_var_nans(obj, final_key, key_prefix, del_col=False):
+    affected_cols = [key for key in obj.var.columns if key.startswith(key_prefix)]
+
+    is_numeric = True
+    if isinstance(obj.var[affected_cols[0]][0], str):
+        is_numeric = False
+
+    if is_numeric:
+        obj.var[final_key] = obj.var[affected_cols].fillna(0).sum(axis=1)
+    else:
+        # this is primarily to get `gene_ids` to work
+        # this should be guaranteed to work since the index is the union of all indexes,
+        # so there should be at least one column where each row is defined.
+        obj.var[final_key] = obj.var[affected_cols[0]].astype(str)
+        for key in affected_cols[1:]:
+            nan_locs = obj.var[final_key] == "nan"
+            obj.var.loc[nan_locs, final_key] = obj.var.loc[nan_locs, key].astype(str)
+
+    if del_col:
+        obj.var.drop(affected_cols, inplace=True)
+
+
 def aggregate(*adatas, combined_output_dir=None,
               combined_sampleid=None, combined_sample_name=None,
               batch_key="batch", del_batch_var=False,
@@ -49,16 +72,13 @@ def aggregate(*adatas, combined_output_dir=None,
     if make_output_dir and not os.path.exists(combined_output_dir):
         os.mkdir(combined_output_dir)
 
-    combined.var["gene_ids"] = combined.var["gene_ids-0"]
-    n_counts_cols = [k for k in combined.var_keys() if k.startswith("n_counts")]
-    combined.var["n_counts"] = combined.var[n_counts_cols].sum(axis=1)
-    n_cells_cols = [k for k in combined.var_keys() if k.startswith("n_cells")]
-    combined.var["n_cells"] = combined.var[n_cells_cols].sum(axis=1)
-
-    # I guess you might be interested in knowing, for example, how many counts you have
-    # for each gene coming from each sample
-    if del_batch_var:
-        combined.var.drop(n_counts_cols + n_cells_cols, inplace=True)
+    # This is needed to fix NaNs cropping up due to `join="outer"` used in
+    # `AnnData.concatenate`
+    # as documented in the warning here:
+    # https://anndata.readthedocs.io/en/latest/anndata.AnnData.concatenate.html#anndata.AnnData.concatenate
+    _fix_var_nans(combined, "gene_ids", "gene_ids-", del_col=del_batch_var)
+    _fix_var_nans(combined, "n_counts", "n_counts-", del_col=del_batch_var)
+    _fix_var_nans(combined, "n_cells", "n_cells-", del_col=del_batch_var)
 
     # now we have to reconcile what's going on from the `uns` perspective
     combined.uns["sampleid"] = combined_sampleid
@@ -67,6 +87,7 @@ def aggregate(*adatas, combined_output_dir=None,
     combined.uns["sample_names"] = _combine_uns_data(adatas, "sample_name")
 
     combined.uns["output_dir"] = combined_output_dir
+    combined.uns["is_aggregation"] = True
     # don't care about individual samples outputdirs so don't capture that
 
     if del_batch_uns:
