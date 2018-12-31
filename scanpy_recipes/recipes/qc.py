@@ -32,6 +32,7 @@ def gen_qc(raw_adata):
     raw_adata.obs["n_genes"] = np.sum(raw_adata.X > 0, axis=1).A1
     raw_adata.var["n_counts"] = np.sum(raw_adata.X, axis=0).A1
     raw_adata.var["n_cells"] = np.sum(raw_adata.X > 0, axis=0).A1
+    raw_adata.uns["10x_umi_cutoff"] = np.min(raw_adata.obs["n_counts"].astype(int))
 
     raw_cells, raw_genes = raw_adata.shape
     raw_adata.uns["raw_cells"] = raw_cells
