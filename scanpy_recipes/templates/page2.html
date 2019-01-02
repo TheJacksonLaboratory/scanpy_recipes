@@ -1,54 +1,10 @@
-<div class="row">
-  <div class="col m-2 p-1 border border-dark rounded text-center">
-    <h2>Key metrics</h2>
-    {% for key, value in adata.uns["10x_metrics"]["important"].items() %}
-    <h3>{{key}}</h3>
-    <h3>{{value}}</h3>
-    {% endfor %}
-  </div>
-
-  <div class="col">
-    <div class="row">
-      <div class="col m-2 p-1 border border-dark rounded">
-        <h2>Sample level metrics</h2>
-        <table>
-        {% for key, value in adata.uns["10x_metrics"]["sample"].items() %}
-          <tr>
-            <td>{{key}}</td>
-            <td>{{value}}</td>
-          </tr>
-        {% endfor %}
-        </table>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col m-2 p-1 border border-dark rounded">
-        <h2>Alignment metrics</h2>
-        <table>
-        {% for key, value in adata.uns["10x_metrics"]["alignment"].items() %}
-          <tr>
-            <td>{{key}}</td>
-            <td>{{value}}</td>
-          </tr>
-        {% endfor %}
-        </table>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col m-2 p-1 border border-dark rounded">
-        <h2>Sequencing metrics</h2>
-        <table>
-        {% for key, value in adata.uns["10x_metrics"]["sequencing"].items() %}
-          <tr>
-            <td>{{key}}</td>
-            <td>{{value}}</td>
-          </tr>
-        {% endfor %}
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
+{% if adata.uns.get("is_aggregation", False) %}
+  {% for sampleid in adata.uns["sampleids"] %}
+    {% set metrics = adata.uns["10x_metrics"][sampleid] %}
+    {% include "metrics.html" %}
+  {% endfor %}
+{% else %}
+  {% set metrics = adata.uns["10x_metrics"] %}
+  {% set sampleid = adata.uns["sampleid"] %}
+  {% include "metrics.html" %}
+{% endif %}

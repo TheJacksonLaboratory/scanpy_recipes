@@ -4,9 +4,12 @@ import base64
 import pkg_resources
 from jinja2 import Environment, PackageLoader, select_autoescape
 from subprocess import check_call
+import matplotlib
 import matplotlib.pyplot as plt
 
 import scanpy.api.logging as logg
+#from scanpy.plotting.tools.scatterplots import umap
+from scanpy.plotting.anndata import scatter
 
 from .utils import datestamp
 
@@ -17,6 +20,11 @@ def fig_to_bytes(fig):
     bytesio.seek(0)
     encoded = base64.b64encode(bytesio.read()).decode("ascii")
     return encoded
+
+
+def _get_sampleid(adata):
+    sampleids = adata.uns.get("sampleids", None)
+    return sampleids if sampleids is not None else [adata.uns["sampleid"]]
 
 
 def _get_output_file(adata, ext="html"):
@@ -47,6 +55,47 @@ class SCBLReport(object):
             lstrip_blocks=True
         )
 
+    def add_report_figures(
+        self,
+        adata,
+        violins=None,
+        scatters=None,
+        cluster_key="cluster",
+        batch_key="sampleid"
+    ):
+
+        img_dict = {"qc": dict()}
+        sampleids = _get_sampleid(adata)
+        adata.uns["sampleids"] = sampleids
+
+        if not violins:
+            raise Exception("Need QC violin plot.")
+        else:
+            if isinstance(violins, matplotlib.figure.Figure):
+                violins = [violins]
+            assert len(sampleids) == len(violins)
+            img_dict["qc"]["violin"] = dict((p1, fig_to_bytes(p2))
+                                            for p1, p2 in zip(sampleids, violins))
+
+        if not scatters:
+            raise Exception("Need QC scatter plot.")
+        else:
+            if isinstance(scatters, matplotlib.figure.Figure):
+                scatters = [scatters]
+            assert len(sampleids) == len(scatters)
+            img_dict["qc"]["scatter"] = dict((p1, fig_to_bytes(p2)) for p1, p2 in zip(sampleids, scatters))
+
+        fig = scatter(adata, basis="umap", color=cluster_key, legend_loc="on data", show=False).figure
+        img_dict["clusters"] = fig_to_bytes(fig)
+        plt.close()
+
+        if adata.uns.get("is_aggregation", False):
+            fig = scatter(adata, basis="umap", color=batch_key, legend_loc="right margin", show=False).figure
+            img_dict["batches"] = fig_to_bytes(fig)
+            plt.close()
+
+        adata.uns["report_images"] = img_dict
+
 
     def _render_page(self, adata, n):
         template = self.env.get_template(f"page{n}.html")
@@ -71,6 +120,7 @@ class SCBLReport(object):
 
         self.html_report = html_report
         self.html_file = report_file
+
 
     def generate_pdf(self):
         pdf_file = f"{os.path.splitext(self.html_file)[0]}.pdf"

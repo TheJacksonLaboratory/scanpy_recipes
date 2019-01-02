@@ -1,15 +1,15 @@
 <div class="row">
-  <div class="col border border-dark rounded m-2 p-1">
+  <div class="header col border border-dark rounded m-2 p-1">
     <div class="row">
       <div class="col m-2">
         <table>
           <tr>
-            <th>Sample ID</td>
+            <th class="title">Sample ID</td>
             <td>{{ adata.uns["sampleid"] }}</td>
           </tr>
           {% if adata.uns["sample_name"] %}
           <tr>
-            <th>Sample Name</td>
+            <th class="title">Sample Name</td>
             <td>{{ adata.uns["sample_name"] }}</td>
           </tr>
           {% endif %}
@@ -19,11 +19,11 @@
       <div class="col m-2">
         <table>
           <tr>
-            <th>Customer</td>
+            <th class="title">Customer</td>
             <td>{{ adata.uns["customer_name"] }}</td>
           </tr>
           <tr>
-            <th>Analyst</td>
+            <th class="title">Analyst</td>
             <td>{{ adata.uns["analyst"] }}</td>
           </tr>
         </table>
@@ -32,11 +32,11 @@
       <div class="col m-2">
         <table>
           <tr>
-            <th>Date generated</td>
+            <th class="title">Date generated</td>
             <td>{{ adata.uns["date_created"] }}</td>
           </tr>
           <tr>
-            <th>Analysis version</td>
+            <th class="title">Analysis version</td>
             <td>{{ adata.uns["analysis_version"] }}</td>
           </tr>
         </table>
