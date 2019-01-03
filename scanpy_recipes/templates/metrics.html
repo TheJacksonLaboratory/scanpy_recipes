@@ -14,6 +14,10 @@
       <div class="col">
         <div class="card card-body text-center my-2">
           <h4 class="card-title">Key metrics</h4>
+            <div class="card-body">
+              <h5 class="card-title">Targetted Cells</h5>
+              <p class="card-text">{{ metrics["target_cells"] }}</p>
+            </div>
           {% for key, value in metrics["important"].items() %}
             <div class="card-body">
               <h5 class="card-title">{{key}}</h5>

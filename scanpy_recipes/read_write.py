@@ -134,6 +134,8 @@ def load_10x_data(sample_name: str, config: AnalysisConfig):
 
     metrics_file = os.path.join(input_dir, "metrics_summary.csv")
     adata.uns["10x_metrics"] = parse_10x_metrics(metrics_file)
+    # hack
+    adata.uns["10x_metrics"]["target_cells"] = 6000
 
     adata.uns["sampleid"] = sample_name
     customer_sample_name = config["sample_names"].get(sample_name, None)

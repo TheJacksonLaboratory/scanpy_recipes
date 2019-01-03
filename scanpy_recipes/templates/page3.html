@@ -94,25 +94,32 @@
     </div>
 
     {% for sampleid in adata.uns["sampleids"] %}
-      <img class="mx-auto d-block"
-        src="data:image/png;base64,{{ adata.uns['report_images']['qc']['scatter'][sampleid] }}"
-        alt="Gene vs UMI scatter plots colored by QC metrics."
-        width="100%" />
-    {% endfor %}
+    <div class="card-deck">
+      <div class="card card-body border-0">
+        <p class="card-text">
+          After QC, the filtered cell-gene matrix contains {{  adata.uns["qc_metrics"]["cells"] }}
+          cells and {{ adata.uns["qc_metrics"]["genes"] }} genes.
+        </p>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item">{{ adata.uns["qc_metrics"]["low_count_genes_removed"] }} genes were removed due to too few counts.</li>
+          <li class="list-group-item">{{ adata.uns["qc_metrics"]["cells_removed"] }} cells were removed due to several factors.
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item">{{ adata.uns["qc_metrics"]["low_count_cells_removed"] }} were removed due to low UMI and gene counts.</li>
+            <li class="list-group-item">{{ adata.uns["qc_metrics"]["red_blood_cells_removed"] }} were removed due to high counts of hemoglobin markers.</li>
+            <li class="list-group-item">{{ adata.uns["qc_metrics"]["high_mtrna_cells_removed"] }} were removed due to high mtRNA content.</li>
+            <li class="list-group-item">{{ adata.uns["qc_metrics"]["low_sequencing_saturation_cells_removed"] }} were removed due to low per-cell sequencing saturation.</li>
+          </ul></li>
+        </ul>
+      </div>
 
-    <p class="card-text">
-      After QC, the filtered cell-gene matrix contains {{  adata.uns["qc_metrics"]["cells"] }}
-      cells and {{ adata.uns["qc_metrics"]["genes"] }} genes.
-    </p>
-    <ul class="list-group list-group-flush">
-      <li class="list-group-item">{{ adata.uns["qc_metrics"]["low_count_genes_removed"] }} genes were removed due to too few counts.</li>
-      <li class="list-group-item">{{ adata.uns["qc_metrics"]["cells_removed"] }} cells were removed due to several factors.
-      <ul class="list-group list-group-flush">
-        <li class="list-group-item">{{ adata.uns["qc_metrics"]["low_count_cells_removed"] }} were removed due to low UMI and gene counts.</li>
-        <li class="list-group-item">{{ adata.uns["qc_metrics"]["red_blood_cells_removed"] }} were removed due to high counts of hemoglobin markers.</li>
-        <li class="list-group-item">{{ adata.uns["qc_metrics"]["high_mtrna_cells_removed"] }} were removed due to high mtRNA content.</li>
-        <li class="list-group-item">{{ adata.uns["qc_metrics"]["low_sequencing_saturation_cells_removed"] }} were removed due to low per-cell sequencing saturation.</li>
-      </ul></li>
-    </ul>
+      <div class="card card-body border-0">
+        <img class="mx-auto d-block"
+          src="data:image/png;base64,{{ adata.uns['report_images']['qc']['scatter'][sampleid] }}"
+          alt="Gene vs UMI scatter plots colored by QC metrics."
+          width="100%" />
+      </div>
+
+    </div>
+    {% endfor %}
   </div>
 </div>

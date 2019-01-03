@@ -122,6 +122,8 @@ def umi_rank_plot(adata_redux, return_fig=False):
     ax.legend(loc="upper right", frameon=False)
     ax.grid(which="both", axis="both", ls=":")
 
+    fig.tight_layout()
+
     if return_fig:
         return fig
 
@@ -208,19 +210,17 @@ def genes_umis_scatter(adata_trial, return_fig=False):
 
 
 def qc_pass_fail(adata_trial, return_fig=False):
-    fig, axs = plt.subplots(figsize=(5, 4))
-    redblue = sns.blend_palette([sns.xkcd_rgb["light red"], "0.9"], 2, as_cmap=True)
-
     pdata = adata_trial.obs[["n_counts", "n_genes", "qc_fail"]]
-    passing = padata.qc_fail == "pass"
+    passing = pdata.qc_fail == "pass"
     pdata_pass = pdata.loc[passing, :]
     pdata_fail = pdata.loc[~passing, :]
     params = dict(linewidths=0.05, edgecolors="k", s=12, alpha=0.6)
 
-    p = ax.scatter(pdata_pass["n_counts"], pdata_pass["n_genes"],
-                   color=sns.xkcd_rgb["light red"], label="Pass", **params)
-    p = ax.scatter(pdata_fail["n_counts"], pdata_fail["n_genes"],
-                   color="0.9", label="Fail", **params)
+    fig, ax = plt.subplots(figsize=(5, 4))
+    ax.scatter(pdata_pass["n_counts"], pdata_pass["n_genes"],
+               color="0.9", label="Pass", **params)
+    ax.scatter(pdata_fail["n_counts"], pdata_fail["n_genes"],
+               color=sns.xkcd_rgb["light red"], label="Fail", **params)
 
     ax.set_xlabel("UMIs")
     ax.set_ylabel("Genes")

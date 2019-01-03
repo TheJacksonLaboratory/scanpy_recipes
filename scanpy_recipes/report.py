@@ -62,9 +62,9 @@ class SCBLReport(object):
     def add_report_figures(
         self,
         adata,
-        ranks=None,
         violins=None,
         scatters=None,
+        ranks=None,
         cluster_key="cluster",
         batch_key="sampleid"
     ):
@@ -72,15 +72,6 @@ class SCBLReport(object):
         img_dict = {"qc": dict()}
         sampleids = _get_sampleid(adata)
         adata.uns["sampleids"] = sampleids
-
-        if not ranks:
-            raise Exception("Need QC rank plot.")
-        else:
-            if isinstance(ranks, matplotlib.figure.Figure):
-                violins = [ranks]
-            assert len(sampleids) == len(ranks)
-            img_dict["qc"]["rank"] = dict((p1, fig_to_bytes(p2))
-                                           for p1, p2 in zip(sampleids, ranks))
 
         if not violins:
             raise Exception("Need QC violin plot.")
@@ -98,6 +89,15 @@ class SCBLReport(object):
                 scatters = [scatters]
             assert len(sampleids) == len(scatters)
             img_dict["qc"]["scatter"] = dict((p1, fig_to_bytes(p2)) for p1, p2 in zip(sampleids, scatters))
+
+        if not ranks:
+            raise Exception("Need QC rank plot.")
+        else:
+            if isinstance(ranks, matplotlib.figure.Figure):
+                violins = [ranks]
+            assert len(sampleids) == len(ranks)
+            img_dict["qc"]["rank"] = dict((p1, fig_to_bytes(p2))
+                                           for p1, p2 in zip(sampleids, ranks))
 
         fig = scatter(adata, basis="umap", color=cluster_key, legend_loc="on data", show=False).figure
         img_dict["clusters"] = fig_to_bytes(fig)
@@ -120,6 +120,9 @@ class SCBLReport(object):
         report_template = self.env.get_template("report.html")
         pages = [self._render_page(adata, n)
                  for n in range(self.MIN_PAGE, self.MAX_PAGE + 1)]
+
+        # hack
+        del adata.uns["10x_metrics"]["sample"]["Sequencing Saturation"]
 
         css = "\n".join(_load_resource(css_file) for css_file in self.CSS_FILES)
         js = "\n".join(_load_resource(js_file) for js_file in self.JS_FILES)
