@@ -117,12 +117,12 @@ class SCBLReport(object):
 
 
     def generate_report(self, adata):
+        # hack
+        del adata.uns["10x_metrics"]["sample"]["Sequencing Saturation"]
+
         report_template = self.env.get_template("report.html")
         pages = [self._render_page(adata, n)
                  for n in range(self.MIN_PAGE, self.MAX_PAGE + 1)]
-
-        # hack
-        del adata.uns["10x_metrics"]["sample"]["Sequencing Saturation"]
 
         css = "\n".join(_load_resource(css_file) for css_file in self.CSS_FILES)
         js = "\n".join(_load_resource(js_file) for js_file in self.JS_FILES)
