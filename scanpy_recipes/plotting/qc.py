@@ -123,7 +123,6 @@ def umi_rank_plot(adata_redux, return_fig=False):
     ax.grid(which="both", axis="both", ls=":")
 
     fig.tight_layout()
-    fig.subplots_adjust(right=0.75)
 
     if return_fig:
         return fig
@@ -228,6 +227,7 @@ def qc_pass_fail(adata_trial, return_fig=False):
     sns.despine(fig, ax)
 
     ax.legend(bbox_to_anchor=(1.01, 1), title="QC", frameon=False)
+    fig.subplots_adjust(right=0.75)
 
     if return_fig:
         return fig
