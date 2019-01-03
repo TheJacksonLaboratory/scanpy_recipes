@@ -1,53 +1,64 @@
-<div class="row">
-  <div class="col border border-dark rounded m-2 p-1">
+<div class="card my-2">
+  <div class="card-header">
+    <a
+      class="d-block collapsed" data-toggle="collapse" aria-expanded="true"
+      id="cellview-heading"
+      href="#cellview-card"
+      aria-controls="cellview-card">
+      CellView Crash Course
+    </a>
+  </div>
+
+  <div id="cellview-card" class="card-body collapse" aria-labelledby="cellview-heading">
+    <p class="card-text">
+      CellView is a web application that allows knowledge-based and hypothesis-driven
+      exploration of processed single cell transcriptomic datasets.  A preprint
+      describing CellView is available on <a
+        href="https://www.biorxiv.org/content/early/2017/04/04/123810">bioRxiv</a>.
+    </p>
+
+    <h5 class="card-title">Access</h5>
+    <p class="card-text">
+      CellView is available <a
+        href="https://ctshiny01.jax.org/flynnb/CellView/">within JAX's network
+        here</a>.  If that link is unavailable or you are an outside collaborator,
+      please utilize the <a
+        href="https://shinyapps.jax.org/20f94606fc80ae8eee2367d269af85ca/">publicly
+        available version here</a>.
+    </p>
+
+    <h5 class="card-title">Getting started</h5>
+    <p class="card-text">
+      Simply visit one of the URLs describe above and then upload your <code>Rds</code>
+      file using the "Browse" button.
+    </p>
+
     <div class="row">
       <div class="col">
-        <h2 class="title">CellView Crash Course</h2>
-        <p>
-          CellView is a web application that allows knowledge-based and hypothesis-driven
-          exploration of processed single cell transcriptomic datasets.  A preprint
-          describing CellView is available on <a
-            href="https://www.biorxiv.org/content/early/2017/04/04/123810">bioRxiv</a>.
-        </p>
-
-        <h3 class="title">Access</h3>
-        <p>
-          CellView is available <a
-            href="https://ctshiny01.jax.org/flynnb/CellView/">within JAX's network
-            here</a>.  If that link is unavailable or you are an outside collaborator,
-          please utilize the <a
-            href="https://shinyapps.jax.org/20f94606fc80ae8eee2367d269af85ca/">publicly
-            available version here</a>.
-        </p>
-
-        <h3 class="title">Getting started</h3>
-        <p>
-          Simply visit one of the URLs describe above and then upload your <code>Rds</code>
-          file using the "Browse" button.
-        </p>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col">
-        <h3 class="title">Visualize gene expression per cluster</h3>
-        <p>
-          Placeholder
-        </p>
+        <div class="card-body">
+          <h5 class="card-title">Visualize gene expression per cluster</h5>
+          <p class="card-text">
+            Placeholder
+          </p>
+        </div>
       </div>
 
       <div class="col">
-        <h3 class="title">Compute coexpression of genes</h3>
-        <p>
-          Placeholder
-        </p>
+        <div class="card-body">
+          <h5 class="card-title">Compute coexpression of genes</h5>
+          <p class="card-text">
+            Placeholder
+          </p>
+        </div>
       </div>
 
       <div class="col">
-        <h3 class="title">Interrogate cluster substructure</h3>
-        <p>
-          Placeholder
-        </p>
+        <div class="card-body">
+          <h5 class="card-title">Interrogate cluster substructure</h5>
+          <p class="card-text">
+            Placeholder
+          </p>
+        </div>
       </div>
     </div>
   </div>

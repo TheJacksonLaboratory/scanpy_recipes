@@ -1,7 +1,7 @@
-<div class="row">
-  <div class="header col border border-dark rounded m-2 p-1">
-    <div class="row">
-      <div class="col m-2">
+<div class="card my-2">
+  <div class="card-body p-0">
+    <div class="card-group">
+      <div class="card-body py-1">
         <table>
           <tr>
             <th class="title">Sample ID</td>
@@ -13,11 +13,20 @@
             <td>{{ adata.uns["sample_name"] }}</td>
           </tr>
           {% endif %}
+          <tr>
+            <th class="title">10X Chemistry</td>
+            <td>{{ adata.uns["10x_chemistry"] if adata.uns.get("10x_chemistry", None) else "v2" }}</td>
+          </tr>
         </table>
       </div>
 
-      <div class="col m-2">
+      <div class="card-body py-1">
         <table>
+          <tr>
+            <th class="title">PI</td>
+            <td>{{ adata.uns["pi_name"] if adata.uns.get("pi_name", None) else
+              adata.uns["customer_name"] }}</td>
+          </tr>
           <tr>
             <th class="title">Customer</td>
             <td>{{ adata.uns["customer_name"] }}</td>
@@ -29,7 +38,7 @@
         </table>
       </div>
 
-      <div class="col m-2">
+      <div class="card-body py-1">
         <table>
           <tr>
             <th class="title">Date generated</td>
@@ -38,6 +47,10 @@
           <tr>
             <th class="title">Analysis version</td>
             <td>{{ adata.uns["analysis_version"] }}</td>
+          </tr>
+          <tr>
+            <th class="title">Report schema</td>
+            <td>{{ adata.uns["report_schema"] if adata.uns.get("report_schema", None) else "1" }}</td>
           </tr>
         </table>
       </div>

@@ -32,20 +32,24 @@ def _get_output_file(adata, ext="html"):
     return os.path.join(adata.uns["output_dir"], outname)
 
 
-def _load_css():
-    css_filename = pkg_resources.resource_filename("scanpy_recipes", "static/bootstrap.min.css")
+def _load_resource(filename):
+    full_path = pkg_resources.resource_filename("scanpy_recipes", filename)
+    contents = ""
     try:
-        with open(css_filename, "r") as fin:
-            css = fin.read()
+        with open(full_path, "r") as fin:
+            contents = fin.read()
     except Exception as e:
         print(e)
-        css = ""
-    return css
+    return contents
 
 
 class SCBLReport(object):
     MIN_PAGE = 1
     MAX_PAGE = 6
+
+    CSS_FILES = ("static/bootstrap.min.css", )
+    JS_FILES = ("static/jquery-3.3.1.min.js",
+                "static/bootstrap.min.js", )
 
     def __init__(self, ):
         self.env = Environment(
@@ -58,6 +62,7 @@ class SCBLReport(object):
     def add_report_figures(
         self,
         adata,
+        ranks=None,
         violins=None,
         scatters=None,
         cluster_key="cluster",
@@ -67,6 +72,15 @@ class SCBLReport(object):
         img_dict = {"qc": dict()}
         sampleids = _get_sampleid(adata)
         adata.uns["sampleids"] = sampleids
+
+        if not ranks:
+            raise Exception("Need QC rank plot.")
+        else:
+            if isinstance(ranks, matplotlib.figure.Figure):
+                violins = [ranks]
+            assert len(sampleids) == len(ranks)
+            img_dict["qc"]["rank"] = dict((p1, fig_to_bytes(p2))
+                                           for p1, p2 in zip(sampleids, ranks))
 
         if not violins:
             raise Exception("Need QC violin plot.")
@@ -107,9 +121,13 @@ class SCBLReport(object):
         pages = [self._render_page(adata, n)
                  for n in range(self.MIN_PAGE, self.MAX_PAGE + 1)]
 
+        css = "\n".join(_load_resource(css_file) for css_file in self.CSS_FILES)
+        js = "\n".join(_load_resource(js_file) for js_file in self.JS_FILES)
+
         html_report = report_template.render(
             adata=adata,
-            css=_load_css(),
+            css=css,
+            js=js,
             html="\n".join(pages)
         )
 

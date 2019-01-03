@@ -1,54 +1,72 @@
-<div class="row">
-  <div class="col m-2 p-1 border border-dark rounded text-center">
-    <h2 class="title">Key metrics - {{ sampleid }}</h2>
-    {% for key, value in metrics["important"].items() %}
-    <h3>{{key}}</h3>
-    <h3>{{value}}</h3>
-    {% endfor %}
+<div class="card my-2">
+  <div class="card-header">
+    <a
+      class="d-block" data-toggle="collapse" aria-expanded="true"
+      id="metrics-heading"
+      href="#metrics-card"
+      aria-controls="metrics-card">
+      Metrics - {{ sampleid }}
+    </a>
   </div>
 
-  <div class="col">
+  <div id="metrics-card" class="card-body collapse show" aria-labelledby="metrics-heading">
     <div class="row">
-      <div class="col m-2 p-1 border border-dark rounded">
-        <h3 class="title">Sample metrics - {{ sampleid }}</h3>
-        <table>
-        {% for key, value in metrics["sample"].items() %}
-          <tr>
-            <td>{{key}}</td>
-            <td>{{value}}</td>
-          </tr>
-        {% endfor %}
-        </table>
-      </div>
-    </div>
+      <div class="col">
+        <div class="card card-body text-center my-2">
+          <h4 class="card-title">Key metrics</h4>
+          {% for key, value in metrics["important"].items() %}
+            <div class="card-body">
+              <h5 class="card-title">{{key}}</h5>
+              <p class="card-text">{{value}}</p>
+            </div>
+          {% endfor %}
+        </div>
 
-    <div class="row">
-      <div class="col m-2 p-1 border border-dark rounded">
-        <h3 class="title">Alignment metrics - {{ sampleid }}</h3>
-        <table>
-        {% for key, value in metrics["alignment"].items() %}
-          <tr>
-            <td>{{key}}</td>
-            <td>{{value}}</td>
-          </tr>
-        {% endfor %}
-        </table>
+        <div class="card card-body my-2">
+          <h4 class="card-title">Sample metrics</h4>
+          <table>
+          {% for key, value in metrics["sample"].items() %}
+            <tr>
+              <td>{{key}}</td>
+              <td>{{value}}</td>
+            </tr>
+          {% endfor %}
+          </table>
+        </div>
       </div>
-    </div>
 
-    <div class="row">
-      <div class="col m-2 p-1 border border-dark rounded">
-        <h3 class="title">Sequencing metrics - {{ sampleid }}</h3>
-        <table>
-        {% for key, value in metrics["sequencing"].items() %}
-          <tr>
-            <td>{{key}}</td>
-            <td>{{value}}</td>
-          </tr>
-        {% endfor %}
-        </table>
+      <div class="col">
+        <div class="card card-body my-2">
+          <img class="mx-auto d-block"
+            src="data:image/png;base64,{{ adata.uns['report_images']['qc']['rank'][sampleid] }}"
+            alt="Cells are called by identifying the knee in the UMI rank plot."
+            width="100%" />
+        </div>
+
+        <div class="card card-body my-2">
+          <h4 class="card-title">Alignment metrics</h4>
+          <table>
+          {% for key, value in metrics["alignment"].items() %}
+            <tr>
+              <td>{{key}}</td>
+              <td>{{value}}</td>
+            </tr>
+          {% endfor %}
+          </table>
+        </div>
+
+        <div class="card card-body my-2">
+          <h5 class="card-title">Sequencing metrics</h5>
+          <table>
+          {% for key, value in metrics["sequencing"].items() %}
+            <tr>
+              <td>{{key}}</td>
+              <td>{{value}}</td>
+            </tr>
+          {% endfor %}
+          </table>
+        </div>
       </div>
     </div>
   </div>
 </div>
-
