@@ -13,6 +13,20 @@ def read_mito_file(genome):
                        index_col=1, header=0).index
 
 def gen_qc(raw_adata):
+    """
+    Appends new calculated metrics, sequencing_saturation, 
+    percent_mito, hemoglobin_counts, n_counts and n_cells to the raw data. 
+    
+    Parameters
+    ----------
+    raw_adata
+           Annotated data matrix.
+
+    Returns
+    -------
+    None
+
+    """
     genome = raw_adata.uns["genome"]
     mt_query = read_mito_file(genome)
     if genome.lower().startswith("m"):
