@@ -1,11 +1,13 @@
 import os
 import numpy as np
 import pandas as pd
+import functools
 from sklearn import metrics
 from scipy.stats import wilcoxon
 import scanpy.api.logging as logg
 from scanpy.tools.leiden import leiden
 from scanpy.tools.louvain import louvain
+from ..utils import shift_clusters, order_clusters, reset_int_category, reorder_clusters
 
 
 def logmean(x, axis=0):
@@ -24,8 +26,9 @@ def cluster(adata_filt, resolution=1.0, key_added="cluster", use_louvain=False):
     else:
         leiden(adata_filt, resolution=resolution, key_added=key_added)
 
-    shift_clusters(adata_filt, key_added)
-    order_clusters(adata_filt, key_added)
+    adata.obs[key_added] = order_clusters(shift_clusters(adata_filt.obs[key_added]))
+    #shift_clusters(adata_filt, key_added)
+    #order_clusters(adata_filt, key_added)
 
 
 def subcluster(adata_filt, cluster, resolution=0.4, cluster_key="cluster"):
@@ -51,7 +54,9 @@ def subcluster(adata_filt, cluster, resolution=0.4, cluster_key="cluster"):
     all_new_clusters = adata_filt.obs[key_added].cat.categories
     just_new_clusters = all_new_clusters[all_new_clusters.str.startswith(cluster)]
     if len(just_new_clusters) == 1:
-        logg.info(f"Wasn't able to subcluster with resolution `{resolution}`].")
+        logg.warn(f"Wasn't able to subcluster with resolution `{resolution}`].")
+        logg.warn(f"You may try increasing the resolution.")
+        logg.warn(f"Returning `adata` with original clusters under `{cluster_key}`.")
         return
 
     old_max = adata_filt.obs[cluster_key].astype(int).max()
@@ -66,19 +71,46 @@ def subcluster(adata_filt, cluster, resolution=0.4, cluster_key="cluster"):
         remapper, axis=1
     )
 
-    adata_filt.obs[key_added] = tmp["new"].astype(str).astype("category")
-    order_clusters(adata_filt, key_added)
+    #adata_filt.obs[key_added] = tmp["new"].astype(str).astype("category")
+    adata_filt.obs[key_added] = order_clusters(tmp["new"])
+    #order_clusters(adata_filt, key_added)
     logg.info(f"Updated clusters under `adata_redux.obs['{key_added}']`.")
 
 
-def shift_clusters(adata, key):
+def combine_clusters(
+        adata,
+        cluster_ids,
+        cluster_key="cluster",
+        shift_remaining=True,
+        combined_cluster_name=None,
+    ):
+
+    cluster_index = pd.Index(cluster_ids)
+    clusters_in_adata = cluster_index.isin(adata.obs[cluster_key])
+    if not clusters_in_adata.all():
+        logg.error(f"Cluster(s) [{cluster_index[~clusters_in_adata]}] not found"
+                   f" in `adata.obs['{cluster_key}']`!")
+        raise ValueError
+
+    if combined_cluster_name is None:
+        combined_cluster_name = cluster_index[0]
+
+    cluster_inds = adata.obs[cluster_key].isin(cluster_index)
+    adata.obs.loc[cluster_inds, cluster_key] = combined_cluster_name
+
+    if shift_remaining:
+        adata.obs[cluster_key] = reset_int_category(adata.obs[cluster_key])
+    logg.info(f"Updated clusters under `adata.obs['{cluster_key}']`.")
+
+
+def shift_clusters_old(adata, key):
     if adata.obs[key].astype(int).min() == 0:
         adata.obs[key] = (
             (adata.obs[key].astype(int) + 1).astype("str").astype("category")
         )
 
 
-def order_clusters(adata, key):
+def order_clusters_old(adata, key):
     adata.obs[key].cat.reorder_categories(
         adata.obs[key].cat.categories.astype(int).sort_values().astype(str),
         inplace=True

@@ -13,6 +13,10 @@ from .report import __api_objects__ as report_api
 from .recipes import aggregate, preprocess, qc, tools
 from .plotting import qc as plqc
 from .plotting.rcmod import update_figure_params
+from .utils import __api_objects__ as utils_api
+
+for object_key, object_ in utils_api.items():
+    sc.__dict__[object_key] = object_
 
 for object_key, object_ in read_write_api.items():
     sc.__dict__[object_key] = object_
