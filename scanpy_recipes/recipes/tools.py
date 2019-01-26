@@ -7,7 +7,8 @@ from scipy.stats import wilcoxon
 import scanpy.api.logging as logg
 from scanpy.tools.leiden import leiden
 from scanpy.tools.louvain import louvain
-from ..utils import shift_clusters, order_clusters, reset_int_category, reorder_clusters
+from ..utils import shift_clusters, order_clusters, reset_int_category, \
+        play_nice_with_categories
 
 
 def logmean(x, axis=0):
@@ -26,7 +27,8 @@ def cluster(adata_filt, resolution=1.0, key_added="cluster", use_louvain=False):
     else:
         leiden(adata_filt, resolution=resolution, key_added=key_added)
 
-    adata.obs[key_added] = order_clusters(shift_clusters(adata_filt.obs[key_added]))
+    adata_filt.obs[key_added] = shift_clusters(adata_filt.obs[key_added])
+    adata_filt.obs[key_added] = order_clusters(adata_filt.obs[key_added])
     #shift_clusters(adata_filt, key_added)
     #order_clusters(adata_filt, key_added)
 
@@ -97,10 +99,29 @@ def combine_clusters(
 
     cluster_inds = adata.obs[cluster_key].isin(cluster_index)
     adata.obs.loc[cluster_inds, cluster_key] = combined_cluster_name
+    adata.obs[cluster_key].cat.remove_unused_categories(inplace=True)
 
     if shift_remaining:
         adata.obs[cluster_key] = reset_int_category(adata.obs[cluster_key])
     logg.info(f"Updated clusters under `adata.obs['{cluster_key}']`.")
+
+
+@play_nice_with_categories(has_int=True)
+def reorder_clusters(obs, subset):
+    """
+    Specify new ordering.  Can only be a subset
+    """
+    subset = np.array(subset, dtype=int).astype(int)
+    subset_index = pd.Index(subset)
+    subset_in_df = subset_index.isin(obs)
+    if not subset_in_df.all():
+        logg.error(f"Cluster(s) [{subset_index[~subset_in_df]}] not found in obs!")
+        raise ValueError
+
+    mapping = dict(zip(sorted(subset), subset))
+    map_index = obs.isin(subset_index)
+    obs.loc[map_index] = obs.loc[map_index].map(mapping)
+    return obs
 
 
 def shift_clusters_old(adata, key):
@@ -165,5 +186,7 @@ def find_marker_genes(adata, cluster_key="cluster", log_fold_change=1.0):
 __api_objects__ = {
     "cluster": cluster,
     "subcluster": subcluster,
-    "find_marker_genes": find_marker_genes
+    "find_marker_genes": find_marker_genes,
+    "reorder_clusters": reorder_clusters,
+    "combine_clusters": combine_clusters,
 }
