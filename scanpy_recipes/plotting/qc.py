@@ -129,17 +129,18 @@ def umi_rank_plot(adata_redux, return_fig=False):
         return fig
 
 
-def cut_violin(ax, threshold=0., cut_above=[True, False], colors=["0.9", "r"]):
+def cut_violin(ax, threshold=0., cut_above=False, color="r"):
     def cut_verts(polycol, threshold, cut_above, color):
         v = polycol.get_paths()[0].vertices
         if cut_above:
             ind = v[:,1] <= threshold
         else:
-            ind = v[:,1] > threshold
+            ind = v[:,1] >= threshold
         polycol.set_verts([v[ind]])
         polycol.set(facecolor=color)
-    cut_verts(ax.collections[0], threshold, cut_above=cut_above[0], color=colors[0])
-    cut_verts(ax.collections[2], threshold, cut_above=cut_above[1], color=colors[1])
+    # ax.collections[0] = first violins
+    # ax.collections[1] = first jitter
+    cut_verts(ax.collections[2], threshold, cut_above=cut_above, color=color)
 
 
 def qc_violins(adata, return_fig=False):
@@ -158,10 +159,12 @@ def qc_violins(adata, return_fig=False):
         threshold = use_thresholds[key]
         print(key, threshold)
         if threshold:
-            ax = pl.violin(adata, key, color="blue", show=False, ax=ax, cut=0)
-            ax = pl.violin(adata, key, color="blue", show=False, ax=ax, cut=0, jitter=False)
+            params = dict(color="0.9", show=False, ax=ax, cut=0, gridsize=300
+                          linewidth=0.25)
+            ax = pl.violin(adata, key, **params)
+            ax = pl.violin(adata, key, jitter=False, **params)
             cut_violin(ax, threshold=threshold,
-                       cut_above=[True, False] if key in flipped_keys else [False, True])
+                       cut_above=False if key in flipped_keys else True)
             ax.axhline(threshold, xmin=0.25, xmax=0.75, color="r")
             #return ax
         else:
