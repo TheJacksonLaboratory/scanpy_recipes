@@ -14,9 +14,9 @@ def read_mito_file(genome):
 
 def gen_qc(raw_adata):
     """
-    Appends new calculated metrics, sequencing_saturation, 
-    percent_mito, hemoglobin_counts, n_counts and n_cells to the raw data. 
-    
+    Appends new calculated metrics, sequencing_saturation,
+    percent_mito, hemoglobin_counts, n_counts and n_cells to the raw data.
+
     Parameters
     ----------
     raw_adata
@@ -103,7 +103,7 @@ def run_qc(adata_raw,
     adata.obs.loc[keep_subset, "qc_fail"] = "pass"
     adata.obs["qc_fail"] = adata.obs["qc_fail"].astype("category")
 
-    n_rbcs = int(sum(~rbc_subset))
+    n_rbcs = int(sum(~rbc_subset)) if rbc_subset != True else 0
     adata.uns["qc_gene_filter"] = {
         "threshold_n_cells": min_cells_per_gene,
         "threshold_n_counts": min_counts_per_gene
