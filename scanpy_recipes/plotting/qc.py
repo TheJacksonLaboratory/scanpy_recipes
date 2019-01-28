@@ -151,6 +151,8 @@ def qc_violins(adata, return_fig=False):
     if thresholds:
         use_thresholds = dict((key, thresholds.get("threshold_" + key, None)) for key in keys)
 
+    flipped_keys = {"percent_mito", "hemoglobin_counts"}
+
     fig, axs = plt.subplots(1, N, figsize=(4*N, N), dpi=200)
     for ax, key in zip(axs.flat, keys):
         threshold = use_thresholds[key]
@@ -159,7 +161,7 @@ def qc_violins(adata, return_fig=False):
             ax = pl.violin(adata, key, color="blue", show=False, ax=ax, cut=0)
             ax = pl.violin(adata, key, color="blue", show=False, ax=ax, cut=0, jitter=False)
             cut_violin(ax, threshold=threshold,
-                       cut_above=[True, False] if key == "percent_mito" else [False, True])
+                       cut_above=[True, False] if key in flipped_keys else [False, True])
             ax.axhline(threshold, xmin=0.25, xmax=0.75, color="r")
             #return ax
         else:
