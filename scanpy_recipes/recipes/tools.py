@@ -61,6 +61,7 @@ def subcluster(adata_filt, cluster, resolution=0.4, cluster_key="cluster"):
         logg.warn(f"Wasn't able to subcluster with resolution `{resolution}`].")
         logg.warn(f"You may try increasing the resolution.")
         logg.warn(f"Returning `adata` with original clusters under `{cluster_key}`.")
+        adata_filt.obs.drop(key_added, axis=1, inplace=True)
         return
 
     old_max = adata_filt.obs[cluster_key].astype(int).max()
