@@ -31,7 +31,8 @@ def submit_rds_job(sampleid, output_dir, rds_filename):
     cmd = f"""
     qsub <<eof
     {sample_script}
-    eof"""
+    eof
+    """
     output = subprocess.check_output(cmd, shell=True).decode("ascii").strip()
     print(f"Rds creation submitted as helix job {output}.")
     print(f"Output will be located in [{output_dir}].")

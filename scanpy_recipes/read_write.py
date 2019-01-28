@@ -1,6 +1,7 @@
 import os
 import re
 import typing
+import pathlib
 import inspect
 import numpy as np
 import pandas as pd
@@ -198,6 +199,84 @@ def load_anndata(infile):
     return adata
 
 
+def get_rds_embedding(adata, cluster_key="cluster", n_dims=3, embedding_type="umap"):
+    if n_dims == 3:
+        embedding = adata.obsm[f"X_{embedding_type}_3d"]
+    else:
+        embedding = adata.obsm[f"X_{embedding_type}"]
+        embedding = np.column_stack((umap, np.zeros(umap.shape[0])))
+    tsne_df = pd.DataFrame(embedding, columns=["V1", "V2", "V3"], index=adata.obs_names)
+    tsne_df["dbCluster"] = adata.obs[cluster_key].astype(int)
+
+    return tsne_df
+
+
+def save_rds_embedding_info(adata, outpath, cluster_key="cluster", n_dims=3):
+    df = get_rds_embedding(adata, cluster_key=cluster_key, n_dims=n_dims)
+    df.to_csv(outpath, sep=",")
+
+
+def write_csvs(adata, outdir, uns_keys=None):
+    """
+    More controlled version of `anndata.AnnData.write_csvs`
+
+    Parameters
+    ----------
+    adata : AnnData object
+    outdir : custom outdir to write to
+    uns_keys : iterable containing `.uns` keys to export.  If None, it'll take a good
+        guess.
+
+    Returns
+    -------
+    """
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+
+    if uns_keys is None:
+        uns_keys = [
+            "sampleid", "sample_name", "principal_investigator_name", "year",
+            "submitter_name", "analyst", "customer_name", "gt_project_id",
+            "genome", "species", "strain", "tissue_type", "cell_line",
+            "chemistry", "target_cells",
+            "raw_genes", "raw_cells", "n_top_genes"
+        ]
+
+    uns_df = {}
+    for key in uns_keys:
+        val = adata.uns.get(key, None)
+        if val is not None:
+            uns_df[key] = val
+
+    metrics_10x = adata.uns.get("10x_metrics", None)
+    if metrics_10x is not None:
+        metrics = {}
+        for k, v in metrics_10x.items():
+            metrics.update(**v)
+        uns_df.update(**metrics)
+    uns_df = pd.DataFrame(uns_df, index=["value"]).T
+
+    to_write = {
+        "X": pd.DataFrame(adata._X.toarray() if issparse(adata._X) else adata._X),
+        "var": adata._var.to_df(),
+        "obs": adata._obs.to_df(),
+        "varm": adata._varm.to_df(),
+        "obsm": adata._obsm.to_df(),
+        "uns": uns_df
+    }
+    if adata.raw is not None:
+        to_write["X_raw"] = pd.DataFrame(adata.raw.X.toarray()
+                                         if issparse(adata.raw.X) else adata.raw.X)
+
+    for key, value in to_write.items():
+        filename = os.path.join(outdir, f"{key}.csv")
+        df.to_csv(
+            filename, sep=",",
+            header=key in {"obs", "var", "obsm", "varm"},
+            index=key in {"obs", "var"},
+        )
+
+
 def save_adata_to_rds(adata, cluster_key="cluster", n_dims=3):
     #tmpd = pd.DataFrame(np.asarray(adata.raw.X.todense()),
     #                    index=adata.obs_names,
@@ -231,13 +310,7 @@ def save_adata_to_rds(adata, cluster_key="cluster", n_dims=3):
         counts.loc["ENSGHASHTAG", :].fillna(0, inplace=True)
         features.loc["ENSGHASHTAG", :] = ["Tag", 1]
 
-    if n_dims == 3:
-        umap = adata.obsm["X_umap_3d"]
-    else:
-        umap = adata.obsm["X_umap"]
-        umap = np.column_stack((umap, np.zeros(umap.shape[0])))
-    tsne = pd.DataFrame(umap, columns=["V1", "V2", "V3"], index=adata.obs_names)
-    tsne["dbCluster"] = adata.obs[cluster_key].astype(int)
+    tsne = get_rds_embedding(adata, cluster_key, n_dims=n_dims)
 
     sampleid = adata.uns["sampleid"]
     outdir = adata.uns["output_dir"]
@@ -322,4 +395,6 @@ __api_objects__ = {
     "load_10x_data": load_10x_data,
     "export_markers": export_markers,
     "get_marker_dataframe": get_marker_dataframe,
+    "write_csvs": write_csvs,
+    "save_rds_embedding_info": save_rds_embedding_info,
 }
