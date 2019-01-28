@@ -98,7 +98,8 @@ def umi_rank_plot(adata_redux, return_fig=False):
     cells = all_barcodes[all_barcodes > min_umis]
     n_cells = len(cells)
 
-    fig, ax = plt.subplots(figsize=(8, 7), dpi=300)
+    #fig, ax = plt.subplots(figsize=(8, 7), dpi=300)
+    fig, ax = plt.subplots(figsize=(4, 3.5), dpi=300)
     ax.plot(cells, color="green", lw=3, label="Called cells", zorder=4)
     ax.plot(all_barcodes, color="0.7", lw=2, label="All barcodes")
     ax.plot([1, n_cells], [min_umis]*2, ls="-", color="0.7", lw=1)
