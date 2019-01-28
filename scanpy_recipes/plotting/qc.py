@@ -158,9 +158,9 @@ def qc_violins(adata, return_fig=False):
     for ax, key in zip(axs.flat, keys):
         threshold = use_thresholds[key]
         print(key, threshold)
+        params = dict(color="0.9", show=False, ax=ax, cut=0, gridsize=300,
+                      linewidth=0.50)
         if threshold:
-            params = dict(color="0.9", show=False, ax=ax, cut=0, gridsize=300
-                          linewidth=0.25)
             ax = pl.violin(adata, key, **params)
             ax = pl.violin(adata, key, jitter=False, **params)
             cut_violin(ax, threshold=threshold,
@@ -168,7 +168,7 @@ def qc_violins(adata, return_fig=False):
             ax.axhline(threshold, xmin=0.25, xmax=0.75, color="r")
             #return ax
         else:
-            pl.violin(adata, key, show=False, ax=ax, cut=0, color="0.9")
+            pl.violin(adata, key, **params)
 
         ax.set_title(adata.uns["obs_titles"][key])
         ax.set_xticks([])
