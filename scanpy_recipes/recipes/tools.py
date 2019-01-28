@@ -10,6 +10,8 @@ from scanpy.tools.louvain import louvain
 from ..utils import shift_clusters, order_clusters, reset_int_category, \
         play_nice_with_categories
 
+from .preprocess import preprocess, dimensionality_reduction
+
 
 def logmean(x, axis=0):
     return np.log1p(np.mean(x, axis=axis))
@@ -79,6 +81,43 @@ def subcluster(adata_filt, cluster, resolution=0.4, cluster_key="cluster"):
     logg.info(f"Updated clusters under `adata_redux.obs['{key_added}']`.")
 
 
+def subcluster_fully(
+        adata,
+        cluster_ids,
+        cluster_key="cluster",
+        embed_in_original=False,
+        preprocess_kwargs={},
+        dimensionality_reduction_kwargs={},
+        cluster_kwargs={}
+    ):
+    """
+    This function differs from `subcluster` in that `subcluster` will only repartition an
+    embedding at a particular cluster/set of clusters.  This function, on the other hand,
+    will attempt to embed the selected cluster(s) into a new embedding with new highly
+    variable gene selection, dimensionality reductions, etc.
+    """
+    if isinstance(cluster_ids, str):
+        cluster_ids = [cluster_ids]
+
+    cluster_index = pd.Index(cluster_ids)
+    clusters_in_adata = cluster_index.isin(adata.obs[cluster_key])
+    if not clusters_in_adata.all():
+        logg.error(f"Cluster(s) [{cluster_index[~clusters_in_adata]}] not found"
+                   f" in `adata.obs['{cluster_key}']`!")
+        raise ValueError
+
+    adata_sub = adata[adata.obs[cluster_key].isin(cluster_ids), :].raw.copy()
+
+    adata_sub, _ = prepreocess(adata_sub, **preprocess_kwargs)
+    adata_sub = dimensionality_reduction(adata_sub, **dimensionality_reduction_kwargs)
+    adata_sub = cluster(adata_sub, **cluster_kwargs)
+
+    if embed_in_original:
+        raise NotImplementedError("Haven't implemented this yet.")
+
+    return adata_sub
+
+
 def combine_clusters(
         adata,
         cluster_ids,
@@ -118,7 +157,8 @@ def reorder_clusters(obs, subset):
         logg.error(f"Cluster(s) [{subset_index[~subset_in_df]}] not found in obs!")
         raise ValueError
 
-    mapping = dict(zip(sorted(subset), subset))
+    #mapping = dict(zip(sorted(subset), subset))
+    mapping = dict(zip(subset, sorted(subset)))
     map_index = obs.isin(subset_index)
     obs.loc[map_index] = obs.loc[map_index].map(mapping)
     return obs
@@ -186,6 +226,7 @@ def find_marker_genes(adata, cluster_key="cluster", log_fold_change=1.0):
 __api_objects__ = {
     "cluster": cluster,
     "subcluster": subcluster,
+    "subcluster_fully": subcluster_fully,
     "find_marker_genes": find_marker_genes,
     "reorder_clusters": reorder_clusters,
     "combine_clusters": combine_clusters,
