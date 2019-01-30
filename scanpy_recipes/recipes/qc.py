@@ -4,13 +4,26 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from collections import OrderedDict
 from scanpy import queries
-from scanpy.preprocessing.simple import filter_cells, filter_genes
+from scanpy.preprocessing import filter_cells, filter_genes
+from scanpy.preprocessing import calculate_qc_metrics
+
+
+def read_data_file(var_type, genome):
+    return pd.read_csv(
+        pkg_resources.resource_filename("scanpy_recipes",
+                                        f"data/{var_type}_genes.{genome}.csv"),
+        index_col=1,
+        header=0
+    ).index
+
+
+def read_hemoglobin_file(genome):
+    return read_data_file("hemoglobin", genome)
 
 
 def read_mito_file(genome):
-    return pd.read_csv(pkg_resources.resource_filename("scanpy_recipes",
-                                                       f"data/mito_genes.{genome}.csv"),
-                       index_col=1, header=0).index
+    return read_data_file("mito", genome)
+
 
 def gen_qc(raw_adata):
     """
@@ -27,25 +40,20 @@ def gen_qc(raw_adata):
     None
 
     """
+
     genome = raw_adata.uns["genome"]
     mt_query = read_mito_file(genome)
-    if genome.lower().startswith("m"):
-        #mt_query = queries.mitochondrial_genes("useast.ensembl.org", "mmusculus")
-        rbc_gene = "Hbb-bs"
-    else:
-        #mt_query = queries.mitochondrial_genes("useast.ensembl.org", "hsapiens")
-        rbc_gene = "HBB"
+    hemo_query = read_hemoglobin_file(genome)
 
-    mito_genes = raw_adata.var_names.intersection(mt_query)
-    raw_adata.obs["percent_mito"] = np.sum(
-        raw_adata[:, mito_genes].X, axis=1).A1 / np.sum(raw_adata.X, axis=1).A1 * 100
+    raw_adata.var["mitochondrial"] = raw_adata.var_names.isin(mt_query)
+    raw_adata.var["hemoglobin"] = raw_adata.var_names.isin(hemo_query)
 
-    raw_adata.obs["hemoglobin_counts"] = raw_adata[:, rbc_gene].X
+    calculate_qc_metrics(
+        adata_raw,
+        qc_vars=("mitochondrial", "hemoglobin"),
+        inplace=True,
+    )
 
-    raw_adata.obs["n_counts"] = np.sum(raw_adata.X, axis=1).A1
-    raw_adata.obs["n_genes"] = np.sum(raw_adata.X > 0, axis=1).A1
-    raw_adata.var["n_counts"] = np.sum(raw_adata.X, axis=0).A1
-    raw_adata.var["n_cells"] = np.sum(raw_adata.X > 0, axis=0).A1
     raw_adata.uns["10x_umi_cutoff"] = np.min(raw_adata.obs["n_counts"].astype(int))
 
     raw_cells, raw_genes = raw_adata.shape
@@ -56,9 +64,10 @@ def gen_qc(raw_adata):
         f"{raw_adata.obs['sequencing_saturation'].median():.1f}%"
 
     raw_adata.uns["obs_titles"] = dict(
-        n_counts="UMIs", n_genes="Genes", percent_mito="mtRNA content",
+        n_counts="UMIs", n_genes="Genes",
+        pct_counts_mitochondrial="mtRNA content",
         sequencing_saturation="Sequencing saturation",
-        hemoglobin_counts="Hemoglobin counts"
+        pct_counts_hemoglobin="Hemoglobin counts"
     )
 
 
@@ -90,9 +99,9 @@ def run_qc(adata_raw,
     if sequencing_saturation:
         seqsat_subset = adata_qc.obs["sequencing_saturation"] > sequencing_saturation
     if percent_mito:
-        mito_subset = adata_qc.obs["percent_mito"] < percent_mito
+        mito_subset = adata_qc.obs["pct_counts_mitochondrial"] < percent_mito
     if rbc_threshold:
-        rbc_subset = adata_qc.obs["hemoglobin_counts"] < rbc_threshold
+        rbc_subset = adata_qc.obs["pct_counts_hemoglobin"] < rbc_threshold
     keep_subset = seqsat_subset & mito_subset & rbc_subset & gene_subset & count_subset
     adata_qc._inplace_subset_obs(keep_subset)
 
@@ -112,8 +121,8 @@ def run_qc(adata_raw,
         "threshold_n_genes": min_genes_per_cell,
         "threshold_n_counts": min_counts_per_cell,
         "threshold_sequencing_saturation": sequencing_saturation,
-        "threshold_percent_mito": percent_mito,
-        "threshold_hemoglobin_counts": rbc_threshold
+        "threshold_pct_counts_mitochondrial": percent_mito,
+        "threshold_pct_counts_hemoglobin": rbc_threshold
     }
 
     qc_metrics = {
