@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 import scanpy.api.logging as logg
-from scanpy.preprocessing import simple as pp
+import scanpy.preprocessing as pp
 from scanpy.preprocessing.bbknn import bbknn
 from scanpy.neighbors import neighbors
 from scanpy.tools.umap import umap
@@ -11,23 +11,31 @@ from scanpy.tools.louvain import louvain
 
 
 def preprocess(adata_raw, n_top_genes=1000, scale=False):
-    adata_raw.obs["n_counts_total"] = adata_raw.obs["n_counts"].copy()
-    adata = pp.normalize_per_cell(adata_raw, copy=True)
+    """
+    Returns a copy of the data where:
+    -   adata.raw.X = normalized UMIs
+    -   adata.X = normalized, log-transformed (and scaled) UMIs
+    -   adata.var has `highly_variable` column
+    """
+    #adata_raw.obs["n_counts_total"] = adata_raw.obs["n_counts"].copy()
     adata.uns["raw_dtype"] = "normalized count"
+    adata.uns["n_top_genes"] = n_top_genes
+
+    adata = pp.normalize_per_cell(adata_raw, copy=True)
     adata.raw = adata
 
-    adata.uns["n_top_genes"] = n_top_genes
-    adata_filt = pp.filter_genes_dispersion(
-        adata, n_top_genes=n_top_genes, flavor="cell_ranger", log=True, copy=True
-    )
-    pp.normalize_per_cell(adata_filt)
-
     pp.log1p(adata)
-    pp.log1p(adata_filt)
-    if scale:
-        pp.scale(adata_filt)
+    pp.highly_variable_genes(
+        adata,
+        n_top_genes=n_top_genes,
+        flavor="cell_ranger"
+    )
+    #pp.normalize_per_cell(adata_filt)
 
-    return adata, adata_filt
+    if scale:
+        pp.scale(adata)
+
+    return adata
 
 
 def dimensionality_reduction(
@@ -38,7 +46,7 @@ def dimensionality_reduction(
     metric="correlation",
     match=False,
 ):
-    pp.pca(adata_filt, n_comps=n_comps, svd_solver="arpack")
+    pp.pca(adata_filt, n_comps=n_comps, svd_solver="arpack", use_highly_variable=True)
 
     if adata_filt.uns.get("is_aggregation", None):
         n_batches = len(adata_filt.obs["batch"].unique())
