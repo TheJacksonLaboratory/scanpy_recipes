@@ -79,25 +79,38 @@ def run_qc(adata_raw,
            rbc_threshold=10,
            trial=False):
     """
+    Applies quality control thresholds to the raw data (adata_raw) using the metrics calculated by gen_qc
+
     Parameters
     ----------
     adata_raw
-           Annotated data matrix. Rows corresponds to cells and columns to genes.
+            AnnData object which stores a data mtrix (adata.X), dataframe-like annotation  of $
+            observations (adata.obs) and variables (adata.var) and an unstructured dictionary-like$
+            annotation (adata.uns).
     min_cells_per_gene
-           Minimum number of cells expressing a gene in order for the gene to pass filtering. 
+            Minimum number of cells expressing a gene in order for the gene to pass QC filter.
     min_counts_per_gene
-           Minimum number of counts(UMIs) required for a gene to pass filtering.
+            Minimum number of counts(UMIs) required for a gene to pass QC filter.
     min_genes_per_cell
-           Minimum number of genes expressed in a cell for the cell to pass filtering.
+            Minimum number of genes expressed in a cell for the cell to pass QC filter.
     min_counts_per_cell
-           Minimum number of counts(UMIs) required for a cell to pass filtering.
+            Minimum number of counts(UMIs) required for a cell to pass QC filter.
     sequencing_saturation
-           
+            Sets minimum sequencing saturation percentage for each cell to pass filter.
+            The sequencing saturation is defined as the fraction of confidently mapped, valid cell-barcode, valid UMI reads
+            that are non-unique. It is 1-UMI counts/total reads. A 50% sequencing saturation means, total reads = 2 X UMI counts;
+            while, a 90% sequencing saturation means, total reads = 10 X UMI counts
     percent_mito
+            Sets maximum fraction of mitochondrial RNA that should be present in a cell to pass QC filter.
     rbc_threshold
+            Sets maximum hemoglobin gene counts for a cell to pass QC filter
     trial
+            If trial = False, a subset of the raw data with all selected filters applied (adata_qc) is returned.
+            If trial = True,the input raw data is retuned with additional fields flagging the portion of the raw data that failed QC. 
 
-
+    Returns
+    -------
+    
 
     """
     orig_shape = adata_raw.shape
