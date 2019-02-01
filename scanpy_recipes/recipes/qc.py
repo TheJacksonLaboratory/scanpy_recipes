@@ -106,11 +106,17 @@ def run_qc(adata_raw,
             Sets maximum hemoglobin gene counts for a cell to pass QC filter
     trial
             If trial = False, a subset of the raw data with all selected filters applied (adata_qc) is returned.
-            If trial = True,the input raw data is retuned with additional fields flagging the portion of the raw data that failed QC. 
+            If trial = True,thea copyof the input raw data is retuned with additional fields flagging the portion of the raw data that failed QC.
 
     Returns
     -------
-    
+    adata
+            AnnData object
+            Copy of the raw data input (adata_raw) with additional fields in its observation dataframe (adata.obs) flagging
+            values of metrics that failed filter with the selected thresholds
+    adata_qc
+            AnnData object
+            Subset of the raw data input (adata_raw) after QC thresholds are applied
 
     """
     orig_shape = adata_raw.shape
