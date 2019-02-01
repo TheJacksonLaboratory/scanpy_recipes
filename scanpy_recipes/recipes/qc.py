@@ -14,17 +14,24 @@ def read_mito_file(genome):
 
 def gen_qc(raw_adata):
     """
-    Appends new calculated metrics, sequencing_saturation,
+    Appends calculated metrics, sequencing_saturation,
     percent_mito, hemoglobin_counts, n_counts and n_cells to the raw data.
 
     Parameters
     ----------
     raw_adata
-           Annotated data matrix.
+            AnnData object which stores a data mtrix (adata.X), dataframe-like annotation  of 
+            observations (adata.obs) and variables (adata.var) and an unstructured dictionary-like
+            annotation (adata.uns).
 
     Returns
     -------
-    None
+    Appends the percentage of mitochondrial genes (percent_mito), the counts of hemoglobin genes (hemoglobin_counts),
+    the UMI counts (n_counts) and the gene counts (n_genes) to the observation dataframe (adata.obs) of the 
+    AnnData object
+    Appends the UMI counts (n_counts) and the cell counts (n_cells) to the variable dataframe (adata.var) of the AnnData object
+    Appends  obervation titles to the unstructured dictionary (adata.uns) for n_counts, n_genes, percent_mito,
+    sequencing_saturation and hemoglobin_counts
 
     """
     genome = raw_adata.uns["genome"]
@@ -72,6 +79,25 @@ def run_qc(adata_raw,
            rbc_threshold=10,
            trial=False):
     """
+    Parameters
+    ----------
+    adata_raw
+           Annotated data matrix. Rows corresponds to cells and columns to genes.
+    min_cells_per_gene
+           Minimum number of cells expressing a gene in order for the gene to pass filtering. 
+    min_counts_per_gene
+           Minimum number of counts(UMIs) required for a gene to pass filtering.
+    min_genes_per_cell
+           Minimum number of genes expressed in a cell for the cell to pass filtering.
+    min_counts_per_cell
+           Minimum number of counts(UMIs) required for a cell to pass filtering.
+    sequencing_saturation
+           
+    percent_mito
+    rbc_threshold
+    trial
+
+
 
     """
     orig_shape = adata_raw.shape
