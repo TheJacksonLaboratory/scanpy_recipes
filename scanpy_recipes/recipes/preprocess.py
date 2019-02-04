@@ -12,7 +12,8 @@ from scanpy.tools.louvain import louvain
 
 def preprocess(adata_raw, n_top_genes=1000, scale=False):
     """
-    
+    Finds the highly variable genes.
+    The data is normalized, log transformed, and scaled.
     
     Parameters
     ----------
