@@ -118,7 +118,7 @@ def load_10x_data(sample_name: str, config: AnalysisConfig):
         os.mkdir(output_dir)
 
     input_dir = config["input_dirs"][sample_name]
-    for h5_file in glob(f"{input_dir}/filtered_*matrices_*h5.h5"):
+    for h5_file in glob.glob(f"{input_dir}/filtered_*matrices_*h5.h5"):
         if os.path.exists(h5_file):
             break
     else:
