@@ -116,9 +116,18 @@ class SCBLReport(object):
         return template.render(adata=adata)
 
 
+    @staticmethod
+    def _remove_sample_seq_sat(adata):
+        # still hack
+        metrics = adata.uns.get("10x_metrics", None)
+        if metrics:
+            if metrics["sample"].get("Sequencing Saturation", None):
+                del adata.uns["10x_metrics"]["sample"]["Sequencing Saturation"]
+
+
     def generate_report(self, adata):
         # hack
-        del adata.uns["10x_metrics"]["sample"]["Sequencing Saturation"]
+        self._remove_sample_seq_sat(adata)
 
         report_template = self.env.get_template("report.html")
         pages = [self._render_page(adata, n)
