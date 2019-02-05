@@ -46,11 +46,11 @@
           </tr>
           <tr>
             <th class="title">Analysis version</td>
-            <td>{{ adata.uns["analysis_version"] }}</td>
+            <td>{{ adata.uns["analysis_pipeline_version"] }}</td>
           </tr>
           <tr>
             <th class="title">Report schema</td>
-            <td>{{ adata.uns["report_schema"] if adata.uns.get("report_schema", None) else "1" }}</td>
+            <td>{{ adata.uns["report_schema_version"] if adata.uns.get("report_schema", None) else "1" }}</td>
           </tr>
         </table>
       </div>

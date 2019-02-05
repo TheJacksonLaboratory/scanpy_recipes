@@ -15,6 +15,7 @@ from scanpy.readwrite import read as scread, write as scwrite
 from scanpy.preprocessing.simple import normalize_per_cell, log1p
 import scanpy.api.logging as logg
 
+from .versions import REPORT_SCHEMA_VERSION, ANALYSIS_PIPELINE_VERSION
 from .utils import datestamp, timestamp, shift_metadata, silence, quantile_limit
 from .qsub import submit_rds_job
 
@@ -136,8 +137,8 @@ def load_10x_data(sample_name: str, config: AnalysisConfig):
 
     metrics_file = os.path.join(input_dir, "metrics_summary.csv")
     adata.uns["10x_metrics"] = parse_10x_metrics(metrics_file)
-    # hack
-    adata.uns["10x_metrics"]["target_cells"] = "6,000"
+    adata.uns["10x_metrics"]["target_cells"] = config["sample_info"]["target_cells"]
+    adata.uns["10x_chemistry"] = config["sample_info"]["10x_chemistry"]
 
     adata.uns["sampleid"] = sample_name
     customer_sample_name = config["sample_names"].get(sample_name, None)
@@ -148,11 +149,14 @@ def load_10x_data(sample_name: str, config: AnalysisConfig):
 
     adata.uns["analyst"] = config["names"]["analyst_name"]
     adata.uns["customer_name"] = config["names"]["customer_name"]
-    adata.uns["analysis_version"] = 1
     adata.uns["date_created"] = datestamp()
+
     adata.uns["input_file"] = os.path.abspath(h5_file)
     adata.uns["input_dir"] = os.path.abspath(input_dir)
     adata.uns["output_dir"] = os.path.abspath(output_dir)
+
+    adata.uns["report_schema_version"] = REPORT_SCHEMA_VERSION
+    adata.uns["analysis_pipeline_version"] = ANALYSIS_PIPELINE_VERSION
 
     return adata
 
