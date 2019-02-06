@@ -5,3 +5,4 @@ pandas>=0.21
 seaborn
 numpy
 cmocean
+pytest

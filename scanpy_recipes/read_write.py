@@ -1,5 +1,6 @@
 import os
 import re
+import glob
 import typing
 import pathlib
 import inspect
@@ -113,14 +114,14 @@ def load_10x_data(sample_name: str, config: AnalysisConfig):
     # create output dir
     output_dir = config["output_dirs"][sample_name]
     if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
+        os.makedirs(output_dir)
 
     input_dir = config["input_dirs"][sample_name]
-    h5s = ["filtered_gene_bc_matrices_h5.h5",
-           "filtered_gene_bc_matrices_mex_h5.h5"]
-    h5_file = os.path.join(input_dir, h5s[0])
-    if not os.path.exists(h5_file):
-        h5_file = os.path.join(input_dir, h5s[1])
+    for h5_file in glob.glob(f"{input_dir}/filtered_*matri*.h5"):
+        if os.path.exists(h5_file):
+            break
+    else:
+        raise IOError(f"Can't find filtered matrix h5 file under [{input_dir}].")
 
     genome = config["genomes"][sample_name]
     adata = read_10x_h5(h5_file, genome)
@@ -277,7 +278,7 @@ def write_csvs(adata, outdir, uns_keys=None):
         )
 
 
-def save_adata_to_rds(adata, cluster_key="cluster", n_dims=3):
+def save_adata_to_rds(adata, cluster_key="cluster", n_dims=3, submit=True):
     #tmpd = pd.DataFrame(np.asarray(adata.raw.X.todense()),
     #                    index=adata.obs_names,
     #                    columns=adata.raw.var_names)
@@ -292,9 +293,9 @@ def save_adata_to_rds(adata, cluster_key="cluster", n_dims=3):
 
     features = pd.DataFrame({"Associated.Gene.Name": tmpd.var.index, "Chromosome.Name": 1}, index=counts.index)
 
-    counts.loc["ENSGGENES", :] = quantile_limit(adata.obs, "n_genes")
-    counts.loc["ENSGUMI", :] = quantile_limit(adata.obs, "n_counts_total")
-    counts.loc["ENSGMITO", :] = quantile_limit(adata.obs, "percent_mito")
+    counts.loc["ENSGGENES", :] = quantile_limit(adata.obs, "n_genes_by_counts")
+    counts.loc["ENSGUMI", :] = quantile_limit(adata.obs, "total_counts")
+    counts.loc["ENSGMITO", :] = quantile_limit(adata.obs, "pct_counts_mitochondrial")
     counts.loc["ENSGSEQSAT", :] = quantile_limit(adata.obs, "sequencing_saturation")
     if adata.uns.get("is_aggregation", None):
         counts.loc["ENSGSAMP", :] = adata.obs.batch.cat.codes
@@ -321,7 +322,10 @@ def save_adata_to_rds(adata, cluster_key="cluster", n_dims=3):
         data.to_csv(outfile)
         logg.info(f"Saved {out_type} to {outfile}.")
 
-    submit_rds_job(sampleid, outdir, f"{sampleid}_{datestamp()}.Rds")
+    if submit:
+        submit_rds_job(sampleid, outdir, f"{sampleid}_{datestamp()}.Rds")
+    else:
+        logg.warn("Skipping job submission.")
 
 
 def get_marker_dataframe(adata, marker_key="auroc_markers"):

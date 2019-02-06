@@ -10,7 +10,7 @@ from scanpy.tools.leiden import leiden
 from scanpy.tools.louvain import louvain
 
 
-def preprocess(adata_raw, n_top_genes=1000, scale=False):
+def preprocess(adata, n_top_genes=1000, scale=False):
     """
     Returns a copy of the data where:
     -   adata.raw.X = normalized UMIs
@@ -21,7 +21,7 @@ def preprocess(adata_raw, n_top_genes=1000, scale=False):
     adata.uns["raw_dtype"] = "normalized count"
     adata.uns["n_top_genes"] = n_top_genes
 
-    adata = pp.normalize_per_cell(adata_raw, copy=True)
+    pp.normalize_per_cell(adata)#, copy=True)
     adata.raw = adata
 
     pp.log1p(adata)
