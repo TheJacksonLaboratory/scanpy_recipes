@@ -1,4 +1,5 @@
 import os
+import glob
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -87,9 +88,12 @@ from scanpy.readwrite import read_10x_h5
 
 
 def umi_rank_plot(adata_redux, return_fig=False):
-    raw_h5 = os.path.join(os.path.dirname(adata_redux.uns["input_file"]),
-                          "raw_gene_bc_matrices_h5.h5")
-    raw = read_10x_h5(raw_h5, adata_redux.uns["genome"])
+    for h5_file in glob.glob(f"{adata_redux.uns['input_dir']}/raw_*matri*.h5"):
+        if os.path.exists(h5_file):
+            break
+    else:
+        raise IOError(f"Can't find raw matrix h5 file under [{input_dir}].")
+    raw = read_10x_h5(h5_file, adata_redux.uns["genome"])
 
     min_umis = adata_redux.uns["10x_umi_cutoff"]
 
