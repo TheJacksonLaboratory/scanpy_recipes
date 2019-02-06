@@ -18,7 +18,7 @@ def preprocess(adata_raw, n_top_genes=1000, scale=False):
     Parameters
     ----------
     raw_adata
-            AnnData object which stores a data mtrix (adata.X), dataframe-like
+            AnnData object which stores a data matrix (adata.X), dataframe-like
             annotation  of observations (adata.obs) and variables (adata.var) and
             an unstructured dictionary-like annotation (adata.uns).
     n_top_genes
@@ -29,7 +29,7 @@ def preprocess(adata_raw, n_top_genes=1000, scale=False):
     
     Returns
     -------
-    None
+    
     """
     adata_raw.obs["n_counts_total"] = adata_raw.obs["n_counts"].copy()
     adata = pp.normalize_per_cell(adata_raw, copy=True)
