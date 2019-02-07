@@ -54,7 +54,7 @@ class AnalysisConfig(object):
                 assert self.placeholder_prefix not in value
         sample_ids = set(config["sample_names"].keys())
         for section in self.required_sections:
-            if section in ("names", "species"): continue
+            if section in ("names", "species", "sample_info"): continue
             assert sample_ids - set(config[section].keys()) == set()
         return config
 
