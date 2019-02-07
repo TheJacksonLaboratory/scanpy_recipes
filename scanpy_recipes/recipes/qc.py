@@ -103,7 +103,7 @@ def run_qc(adata_raw,
     adata.obs.loc[keep_subset, "qc_fail"] = "pass"
     adata.obs["qc_fail"] = adata.obs["qc_fail"].astype("category")
 
-    n_rbcs = 0 if isinstance(rbc_subset, bool) else int(sum(~rbc_subset)) 
+    n_rbcs = 0 if isinstance(rbc_subset, bool) else int(sum(~rbc_subset))
     adata.uns["qc_gene_filter"] = {
         "threshold_n_cells": min_cells_per_gene,
         "threshold_n_counts": min_counts_per_gene
@@ -123,6 +123,7 @@ def run_qc(adata_raw,
         "low_sequencing_saturation_cells_removed": \
                 int(sum(~seqsat_subset & rbc_subset & mito_subset)),
         "low_count_cells_removed": int(sum(adata.obs.qc_fail_counts)),
+        "low_gene_cells_removed": int(sum(adata.obs.qc_fail_genes)),
         "low_count_genes_removed": int(sum(adata.var.qc_fail_counts)),
         "cells": adata_qc.shape[0],
         "genes": adata_qc.shape[1]

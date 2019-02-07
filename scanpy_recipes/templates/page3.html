@@ -11,24 +11,39 @@
 
   <div id="qc-card" class="card-body collapse" aria-labelledby="qc-heading">
     <p class="card-text">
-      Data was filtered in three passes.  During FASTQ generation, reads with more
+      Each sample was filtered in three passes.  During FASTQ generation, reads with more
       than 1 mismatch in the 8bp i7 index are excluded.  During alignment (using
-      <a href="https://github.com/alexdobin/STAR">STAR</a>), only reads with MAPQ
-      scores greater than 255 that are aligned to annotated transcripts are retained.
-      Reads containing bases with Q30 scores below 3 are further excluded.
+      <a href="https://github.com/alexdobin/STAR">STAR</a>), only reads with MAPQ scores
+      greater than 255 that are aligned to annotated transcripts are retained.  Reads
+      containing bases with Q30 scores below 3 are further excluded.
     </p>
 
     <p class="card-text">
       After alignment, cell barcodes are filtered (up to 1 mismatch) against a
       whitelist of 737,500 barcodes provided by 10X Genomics.  Then barcodes
       associated with cells are distinguished from those associated with ambient mRNA
-      using an adaptively computed UMI threshold of {{ adata.uns["10x_umi_cutoff"] }}
-      counts.  More on how this is computed can be found in the <a
-        href="https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/algorithms/overview#cell_calling">10X
-        CellRanger documentation</a>.  After this filtering, a
-      {{ adata.uns["raw_cells"] }} (cells) by {{ adata.uns["raw_genes"] }} (genes) counts
-      matrix is generated.
+      using an adaptively computed UMI threshold.  More on how this is computed can be
+      found in the
+      <a href="https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/algorithms/overview#cell_calling">
+        10X CellRanger documentation</a>.  After this filtering, a digital counts matrix is
+      generated for each sample:
     </p>
+
+    <ul class="list-group list-group-flush">
+      {% if adata.uns["is_aggregation"] %}
+        {% for sampleid in adata.uns["sampleids"] %}
+          <li class="list-group-item">
+            <strong>{{ sampleid }}</strong>: {{ adata.uns["raw_cells"][sampleid] }} (cells) by
+            {{ adata.uns["raw_genes"][sampleid] }} (genes)
+          </li>
+        {% endfor %}
+      {% else %}
+        <li class="list-group-item">
+          <strong>{{ adata.uns["sampleid"] }}</strong>: {{ adata.uns["raw_cells"] }} (cells) by
+          {{ adata.uns["raw_genes"] }} (genes)
+        </li>
+      {% endif %}
+    </ul>
 
     {% for sampleid in adata.uns["sampleids"] %}
       <img class="mx-auto d-block"
@@ -41,85 +56,129 @@
       also depicted above.
     </p>
 
-    <div class="card-deck">
-      <div class="card border-0">
-        <div class="card-header">
-          Cells that are excluded:
-        </div>
 
-        <div class="card-body">
-          <ul class="list-group list-group-flush">
-            <li class="list-group-item">cells with fewer than
-              <mark>{{ adata.uns["qc_cell_filter"]["threshold_n_genes"] }}</mark>
-              genes</li>
-            <li class="list-group-item">cells with fewer than
-              <mark>{{ adata.uns["qc_cell_filter"]["threshold_n_counts"] }}</mark> UMI
-              counts</li>
-            {% if "threshold_hemoglobin_counts" in adata.uns["qc_cell_filter"] %}
-            <li class="list-group-item">cells with greater than
-              <mark>{{ adata.uns["qc_cell_filter"]["threshold_hemoglobin_counts"] }}</mark>
-              raw hemoglobin gene counts (e.g. HBB or Hbb-bs)</li>
-            {% endif %}
-            {% if "threshold_percent_mito" in adata.uns["qc_cell_filter"] %}
-            <li class="list-group-item">cells where mitochondrial mRNA comprises more than
-              <mark>{{ adata.uns["qc_cell_filter"]["threshold_percent_mito"] }}%</mark>
-              of the total UMI counts</li>
-            {% endif %}
-            {% if "threshold_sequencing_saturation" in adata.uns["qc_cell_filter"] %}
-            <li class="list-group-item">cells where per-cell sequencing saturation is
-              lower than
-              <mark>{{ adata.uns["qc_cell_filter"]["threshold_sequencing_saturation"] }}%</mark>
-            </li>
-            {% endif %}
-          </ul>
-        </div>
-      </div>
+    <div class="table-hover table-responsive">
+    <table class="table table-sm">
+    <caption>Quantities in (parentheses) denote the threshold used.</caption>
+    <thead>
+    <tr>
+      <th scope="col" colspan="1" rowspan="2">SampleID</th>
+      <th style="text-align: right" scope="col" colspan="1" rowspan="2">QC'd Cells</th>
+      <th style="text-align: right" scope="col" colspan="1" rowspan="2">QC'd Genes</th>
+      <th style="text-align: right" scope="col" colspan="5" rowspan="1">Cells Excluded by</th>
+      <th style="text-align: right" scope="col" colspan="1" rowspan="2">Genes Excluded by
+      cell count</th>
+    </tr>
 
-      <div class="card border-0">
-        <div class="card-header">
-          Genes that are excluded:
-        </div>
+    <tr>
+      <th style="text-align: right" scope="col" colspan="1" rowspan="1">UMI counts</th>
+      <th style="text-align: right" scope="col" colspan="1" rowspan="1">Genes counts</th>
+      <th style="text-align: right" scope="col" colspan="1" rowspan="1">mtRNA content</th>
+      <th style="text-align: right" scope="col" colspan="1" rowspan="1">Hemoglobin content</th>
+      <th style="text-align: right" scope="col" colspan="1" rowspan="1">Sequencing saturation</th>
+    </tr>
+  </thead>
 
-        <div class="card-body">
-          <ul class="list-group list-group-flush">
-            <li class="list-group-item">genes expressed in fewer than
-              <mark>{{ adata.uns["qc_gene_filter"]["threshold_n_cells"] }}</mark>
-              cells</li>
-              <li class="list-group-item">genes with fewer than
-                <mark>{{ adata.uns["qc_gene_filter"]["threshold_n_counts"] }}</mark> UMI
-                counts</li>
-          </ul>
-        </div>
-      </div>
+  <tbody>
+    {% if adata.uns.get("is_aggregation", False) %}
+      {% for sampleid in adata.uns["sampleids"] %}
+        <tr>
+          <th scope="row">{{ sampleid }}</th>
+          <td>
+            {{ adata.uns["qc_metrics"][sampleid]["cells"] }}
+          </td>
+          <td>
+            {{ adata.uns["qc_metrics"][sampleid]["genes"] }}
+          </td>
+          <td>
+            {{ adata.uns["qc_metrics"][sampleid]["low_gene_cells_removed"] }}
+            ({{ adata.uns["qc_cell_filter"][sampleid]["threshold_n_genes"] }})
+          </td>
+          <td>
+            {{ adata.uns["qc_metrics"][sampleid]["low_count_cells_removed"] }}
+            ({{ adata.uns["qc_cell_filter"][sampleid]["threshold_n_counts"] }})
+          </td>
+          {% if "threshold_hemoglobin_counts" in adata.uns["qc_cell_filter"][sampleid] %}
+          <td>
+            {{ adata.uns["qc_metrics"][sampleid]["red_blood_cells_removed"] }}
+            ({{ adata.uns["qc_cell_filter"][sampleid]["threshold_hemoglobin_counts"] }})
+          </td>
+          {% endif %}
+          {% if "threshold_percent_mito" in adata.uns["qc_cell_filter"][sampleid] %}
+          <td>
+            {{ adata.uns["qc_metrics"][sampleid]["high_mtrna_cells_removed"] }}
+            ({{ adata.uns["qc_cell_filter"][sampleid]["threshold_percent_mito"] }})
+          </td>
+          {% endif %}
+          {% if "threshold_sequencing_saturation" in adata.uns["qc_cell_filter"][sampleid] %}
+          <td>
+            {{ adata.uns["qc_metrics"][sampleid]["low_sequencing_saturation_cells_removed"] }}
+            ({{ adata.uns["qc_cell_filter"][sampleid]["threshold_sequencing_saturation"] }})
+          </td>
+          {% endif %}
+          <td>
+            {{ adata.uns["qc_metrics"][sampleid]["low_count_genes_removed"] }}
+            ({{ adata.uns["qc_gene_filter"][sampleid]["threshold_n_cells"] }})
+          </td>
+        </tr>
+      {% endfor %}
+
+    {% else %}
+      <tr>
+        <th scope="row">{{ adata.uns["sampleid"] }}</th>
+        <td>
+          {{ adata.uns["qc_metrics"]["cells"] }}
+        </td>
+        <td>
+          {{ adata.uns["qc_metrics"]["genes"] }}
+        </td>
+        <td>
+          {{ adata.uns["qc_metrics"]["low_gene_cells_removed"] }}
+          ({{ adata.uns["qc_cell_filter"]["threshold_n_genes"] }})
+        </td>
+        <td>
+          {{ adata.uns["qc_metrics"]["low_count_cells_removed"] }}
+          ({{ adata.uns["qc_cell_filter"]["threshold_n_counts"] }})
+        </td>
+        {% if "threshold_hemoglobin_counts" in adata.uns["qc_cell_filter"] %}
+        <td>
+          {{ adata.uns["qc_metrics"]["red_blood_cells_removed"] }}
+          ({{ adata.uns["qc_cell_filter"]["threshold_hemoglobin_counts"] }})
+        </td>
+        {% endif %}
+        {% if "threshold_percent_mito" in adata.uns["qc_cell_filter"] %}
+        <td>
+          {{ adata.uns["qc_metrics"]["high_mtrna_cells_removed"] }}
+          ({{ adata.uns["qc_cell_filter"]["threshold_percent_mito"] }})
+        </td>
+        {% endif %}
+        {% if "threshold_sequencing_saturation" in adata.uns["qc_cell_filter"] %}
+        <td>
+          {{ adata.uns["qc_metrics"]["low_sequencing_saturation_cells_removed"] }}
+          ({{ adata.uns["qc_cell_filter"]["threshold_sequencing_saturation"] }})
+        </td>
+        {% endif %}
+        <td>
+          {{ adata.uns["qc_metrics"]["low_count_genes_removed"] }}
+          ({{ adata.uns["qc_gene_filter"]["threshold_n_cells"] }})
+        </td>
+      </tr>
+
+    {% endif %}
+    </tbody>
+    </table>
     </div>
 
     {% for sampleid in adata.uns["sampleids"] %}
     <div class="card-deck">
-      <div class="card card-body border-0">
-        <p class="card-text">
-          After QC, the filtered cell-gene matrix contains {{  adata.uns["qc_metrics"]["cells"] }}
-          cells and {{ adata.uns["qc_metrics"]["genes"] }} genes.
-        </p>
-        <ul class="list-group list-group-flush">
-          <li class="list-group-item">{{ adata.uns["qc_metrics"]["low_count_genes_removed"] }} genes were removed due to too few counts.</li>
-          <li class="list-group-item">{{ adata.uns["qc_metrics"]["cells_removed"] }} cells were removed due to several factors.
-          <ul class="list-group list-group-flush">
-            <li class="list-group-item">{{ adata.uns["qc_metrics"]["low_count_cells_removed"] }} were removed due to low UMI and gene counts.</li>
-            <li class="list-group-item">{{ adata.uns["qc_metrics"]["red_blood_cells_removed"] }} were removed due to high counts of hemoglobin markers.</li>
-            <li class="list-group-item">{{ adata.uns["qc_metrics"]["high_mtrna_cells_removed"] }} were removed due to high mtRNA content.</li>
-            <li class="list-group-item">{{ adata.uns["qc_metrics"]["low_sequencing_saturation_cells_removed"] }} were removed due to low per-cell sequencing saturation.</li>
-          </ul></li>
-        </ul>
-      </div>
-
       <div class="card card-body border-0">
         <img class="mx-auto d-block"
           src="data:image/png;base64,{{ adata.uns['report_images']['qc']['scatter'][sampleid] }}"
           alt="Gene vs UMI scatter plots colored by QC metrics."
           width="100%" />
       </div>
-
     </div>
     {% endfor %}
+
   </div>
 </div>
