@@ -240,6 +240,7 @@ def qc_pass_fail(adata_trial, return_fig=False):
 
     ax.set_xlabel("UMIs")
     ax.set_ylabel("Genes")
+    ax.set_title(adata_trial.uns["sampleid"])
     sns.despine(fig, ax)
 
     ax.legend(bbox_to_anchor=(1.01, 1), title="QC", frameon=False)
