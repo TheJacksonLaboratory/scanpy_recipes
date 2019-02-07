@@ -1,6 +1,7 @@
 import os
 import collections
 
+
 def _combine_uns_data(adatas, key):
     comb_uns = dict()
     for adata in adatas:
@@ -93,7 +94,7 @@ def aggregate(*adatas, combined_output_dir=None,
     if del_batch_uns:
         return combined
 
-    copy_keys = ["analysis_version", "analyst", "customer_name", "date_created", "obs_titles"]
+    copy_keys = ["analysis_pipeline_version", "analyst", "customer_name", "date_created", "obs_titles"]
     for key in copy_keys:
         combined.uns[key] = adatas[0].uns[key]
     merge_keys = set(adatas[0].uns_keys()) - set(combined.uns_keys())

@@ -45,7 +45,7 @@ def _load_resource(filename):
 
 class SCBLReport(object):
     MIN_PAGE = 1
-    MAX_PAGE = 6
+    MAX_PAGE = 5
 
     CSS_FILES = ("static/bootstrap.min.css", )
     JS_FILES = ("static/jquery-3.3.1.min.js",
@@ -121,8 +121,13 @@ class SCBLReport(object):
         # still hack
         metrics = adata.uns.get("10x_metrics", None)
         if metrics:
-            if metrics["sample"].get("Sequencing Saturation", None):
-                del adata.uns["10x_metrics"]["sample"]["Sequencing Saturation"]
+            if adata.uns.get("is_aggregation", False):
+                for sampleid in adata.uns["sampleids"]:
+                    if metrics[sampleid]["sample"].get("Sequencing Saturation", None):
+                        del adata.uns["10x_metrics"][sampleid]["sample"]["Sequencing Saturation"]
+            else:
+                if metrics["sample"].get("Sequencing Saturation", None):
+                    del adata.uns["10x_metrics"]["sample"]["Sequencing Saturation"]
 
 
     def generate_report(self, adata):
