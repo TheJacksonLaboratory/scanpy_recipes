@@ -182,8 +182,8 @@ def qc_violins(adata, return_fig=False):
 
     fig.tight_layout()
     fig.text(
-        x=0, y=0.5, s=f"Sample: {adata.uns['sampleid']}",
-        rotation=90, va='center', ha='center', fontsize='xx-large'
+        x=0.01, y=0.5, s=f"Sample: {adata.uns['sampleid']}",
+        rotation=90, va='center', ha='right', fontsize='xx-large'
     )
     fig.subplots_adjust(left=0.05)
 
