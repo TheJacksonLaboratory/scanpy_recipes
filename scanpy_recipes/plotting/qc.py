@@ -102,8 +102,8 @@ def umi_rank_plot(adata_redux, return_fig=False):
     cells = all_barcodes[all_barcodes > min_umis]
     n_cells = len(cells)
 
-    #fig, ax = plt.subplots(figsize=(8, 7), dpi=300)
-    fig, ax = plt.subplots(figsize=(4, 3.5), dpi=300)
+    fig, ax = plt.subplots(figsize=(8, 7), dpi=300)
+    #fig, ax = plt.subplots(figsize=(4, 3.5), dpi=300)
     ax.plot(cells, color="green", lw=3, label="Called cells", zorder=4)
     ax.plot(all_barcodes, color="0.7", lw=2, label="All barcodes")
     ax.plot([1, n_cells], [min_umis]*2, ls="-", color="0.7", lw=1)
@@ -114,6 +114,7 @@ def umi_rank_plot(adata_redux, return_fig=False):
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlim(1, ax.get_xlim()[1])
+    ax.set_title(adata_redux.uns["sampleid"])
 
     ax.xaxis.set_major_locator(LogLocator())
     ax.yaxis.set_major_locator(LogLocator())
@@ -180,6 +181,11 @@ def qc_violins(adata, return_fig=False):
         sns.despine(fig, ax)
 
     fig.tight_layout()
+    fig.text(
+        x=0.01, y=0.5, s=f"Sample: {adata.uns['sampleid']}",
+        rotation=90, va='center', ha='right', fontsize='xx-large'
+    )
+    fig.subplots_adjust(left=0.05)
 
     if return_fig:
         return fig
@@ -234,6 +240,7 @@ def qc_pass_fail(adata_trial, return_fig=False):
 
     ax.set_xlabel("UMIs")
     ax.set_ylabel("Genes")
+    ax.set_title(adata_trial.uns["sampleid"])
     sns.despine(fig, ax)
 
     ax.legend(bbox_to_anchor=(1.01, 1), title="QC", frameon=False)

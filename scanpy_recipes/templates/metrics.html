@@ -2,14 +2,14 @@
   <div class="card-header">
     <a
       class="d-block" data-toggle="collapse" aria-expanded="true"
-      id="metrics-heading"
-      href="#metrics-card"
-      aria-controls="metrics-card">
+      id="metrics-heading-{{ sampleid }}"
+      href="#metrics-card-{{ sampleid }}"
+      aria-controls="metrics-card-{{ sampleid }}">
       Metrics - {{ sampleid }}
     </a>
   </div>
 
-  <div id="metrics-card" class="card-body collapse show" aria-labelledby="metrics-heading">
+  <div id="metrics-card-{{ sampleid }}" class="card-body collapse show" aria-labelledby="metrics-heading-{{ sampleid }}">
     <div class="row">
       <div class="col">
         <div class="card card-body text-center my-2">

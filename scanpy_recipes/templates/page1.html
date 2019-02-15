@@ -15,7 +15,11 @@
           {% endif %}
           <tr>
             <th class="title">10X Chemistry</td>
+            {% if adata.uns.get("is_aggregation", False) %}
+            <td>{{ adata.uns["10x_chemistry"][adata.uns["sampleids"][0]] if adata.uns.get("10x_chemistry", None) else "v2" }}</td>
+            {% else %}
             <td>{{ adata.uns["10x_chemistry"] if adata.uns.get("10x_chemistry", None) else "v2" }}</td>
+            {% endif %}
           </tr>
         </table>
       </div>
