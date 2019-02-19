@@ -87,6 +87,9 @@ class SlurmSubmitter(Submitter):
 
 
 class LocalSubmitter(Submitter):
+    # string formatting will only barf if keys present in string are not
+    # present in format call, but not the other way around.  We can exploit
+    # that here.
     header = ""
     def __init__(self, ):
         super().__init__()

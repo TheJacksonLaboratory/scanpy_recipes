@@ -313,7 +313,7 @@ def save_adata_to_rds(adata, cluster_key="cluster", n_dims=3, **submit_kwds):
         -   `"walltime"` format is `"HH:MM:SS"`, e.g. `walltime="00:30:00"`. Default is
             `"00:15:00"`
         -   `"mem"` is some number of megabytes of memory. Default is 64000.
-        -   `"scheduler"` can be one of {"pbs", "slurm"}
+        -   `"scheduler"` can be one of {"pbs", "slurm", "local"}
 
     Returns
     -------
