@@ -54,7 +54,7 @@ class AnalysisConfig(object):
                 assert self.placeholder_prefix not in value
         sample_ids = set(config["sample_names"].keys())
         for section in self.required_sections:
-            if section in ("names", "species", "sample_info"): continue
+            if section in ("names", "species"): continue
             assert sample_ids - set(config[section].keys()) == set()
         return config
 
@@ -137,8 +137,10 @@ def load_10x_data(sample_name: str, config: AnalysisConfig):
 
     metrics_file = os.path.join(input_dir, "metrics_summary.csv")
     adata.uns["10x_metrics"] = parse_10x_metrics(metrics_file)
-    adata.uns["10x_metrics"]["target_cells"] = config["sample_info"]["target_cells"]
-    adata.uns["10x_chemistry"] = config["sample_info"]["10x_chemistry"]
+    adata.uns["10x_metrics"]["target_cells"] = config["target_cells"].get(sample_name, None)
+    adata.uns["10x_chemistry"] = config["10x_chemistry"].get(sample_name, None)
+    adata.uns["cellranger_version"] = config["cellranger_version"].get(sample_name, None)
+    adata.uns["cellranger_reference_version"] = config["reference_version"].get(sample_name, None)
 
     adata.uns["sampleid"] = sample_name
     customer_sample_name = config["sample_names"].get(sample_name, None)
@@ -148,6 +150,7 @@ def load_10x_data(sample_name: str, config: AnalysisConfig):
     adata.uns["species"] = config["species"][genome]
 
     adata.uns["analyst"] = config["names"]["analyst_name"]
+    adata.uns["principal_investigator_name"] = config["names"]["pi_name"]
     adata.uns["customer_name"] = config["names"]["customer_name"]
     adata.uns["date_created"] = datestamp()
 
