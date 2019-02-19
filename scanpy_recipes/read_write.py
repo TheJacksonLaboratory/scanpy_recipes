@@ -150,8 +150,10 @@ def load_10x_data(sample_name: str, config: AnalysisConfig):
     adata.uns["species"] = config["species"][genome]
 
     adata.uns["analyst"] = config["names"]["analyst_name"]
-    adata.uns["principal_investigator_name"] = config["names"]["pi_name"]
     adata.uns["customer_name"] = config["names"]["customer_name"]
+    adata.uns["principal_investigator_name"] = config["names"].get(
+        "pi_name", adata.uns["customer_name"]
+    )
     adata.uns["date_created"] = datestamp()
 
     adata.uns["input_file"] = os.path.abspath(h5_file)
