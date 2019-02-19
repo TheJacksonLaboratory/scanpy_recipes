@@ -12,6 +12,7 @@ import scanpy.api.logging as logg
 from scanpy.plotting.anndata import scatter
 
 from .utils import datestamp
+from scanpy import __version__ as sc_version
 
 
 def fig_to_bytes(fig):
@@ -145,7 +146,8 @@ class SCBLReport(object):
             adata=adata,
             css=css,
             js=js,
-            html="\n".join(pages)
+            html="\n".join(pages),
+            scanpy_version=sc_version
         )
 
         report_file = _get_output_file(adata, ext="html")
