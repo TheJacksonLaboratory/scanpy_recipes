@@ -17,7 +17,7 @@ import scanpy.api.logging as logg
 
 from .versions import REPORT_SCHEMA_VERSION, ANALYSIS_PIPELINE_VERSION
 from .utils import datestamp, timestamp, shift_metadata, silence, quantile_limit
-from .qsub import submit_rds_job
+from .submit import submit_rds_job
 
 
 class AnalysisConfig(object):
@@ -287,7 +287,39 @@ def write_csvs(adata, outdir, uns_keys=None):
         )
 
 
-def save_adata_to_rds(adata, cluster_key="cluster", n_dims=3):
+def save_adata_to_rds(adata, cluster_key="cluster", n_dims=3, **submit_kwds):
+    """
+    Creates CellView Rds file via a batch job.
+
+    This function creates 3 intermediate files in `adata.uns["output_dir"]`:
+    -   '*_counts.csv': the normalized, raw counts matrix, transposed.
+    -   '*_features.csv': a modified version of `adata.var`
+    -   '*_umap?d.csv': a 4 column dataframe storing either 2d or 3d umap coordinates
+        (`adata.obsm["X_umap?d"]`, with column 3 all zeros for 2d umap), and
+        `adata.uns[cluster_key]`.
+    It then submits a background job to a cluster or locally to create a
+    CellView-formatted Rds file.
+
+    Parameters
+    ----------
+    adata : AnnData object
+    cluster_key : str
+        key in `adata.obs` to use as `dbCluster`
+    n_dims : {2, 3}
+        the dimensionality of the embedding to save.  If `n_dims=2`, will set `V3` column
+        to all zeros.
+    submit_kwds : {"walltime", "mem", "scheduler"}
+        keywords to pass to underlying job submitter:
+        -   `"walltime"` format is `"HH:MM:SS"`, e.g. `walltime="00:30:00"`. Default is
+            `"00:15:00"`
+        -   `"mem"` is some number of megabytes of memory. Default is 64000.
+        -   `"scheduler"` can be one of {"pbs", "slurm", "local"}
+
+    Returns
+    -------
+    None
+        Prints save
+    """
     #tmpd = pd.DataFrame(np.asarray(adata.raw.X.todense()),
     #                    index=adata.obs_names,
     #                    columns=adata.raw.var_names)
@@ -331,7 +363,7 @@ def save_adata_to_rds(adata, cluster_key="cluster", n_dims=3):
         data.to_csv(outfile)
         logg.info(f"Saved {out_type} to {outfile}.")
 
-    submit_rds_job(sampleid, outdir, f"{sampleid}_{datestamp()}.Rds")
+    submit_rds_job(sampleid, outdir, f"{sampleid}_{datestamp()}.Rds", **submit_kwds)
 
 
 def get_marker_dataframe(adata, marker_key="auroc_markers"):
