@@ -72,8 +72,7 @@
       <th style="text-align: right" scope="col" colspan="1" rowspan="2">QC'd Cells</th>
       <th style="text-align: right" scope="col" colspan="1" rowspan="2">QC'd Genes</th>
       <th style="text-align: right" scope="col" colspan="5" rowspan="1">Cells Excluded by</th>
-      <th style="text-align: right" scope="col" colspan="1" rowspan="2">Genes Excluded by
-      cell count</th>
+      <th style="text-align: right" scope="col" colspan="1" rowspan="2">Genes Excluded by cell count</th>
     </tr>
 
     <tr>
@@ -148,24 +147,28 @@
           {{ adata.uns["qc_metrics"]["low_count_cells_removed"] }}
           ({{ adata.uns["qc_cell_filter"]["threshold_n_counts"] }})
         </td>
-        {% if "threshold_percent_mito" in adata.uns["qc_cell_filter"] %}
         <td>
           {{ adata.uns["qc_metrics"]["high_mtrna_cells_removed"] }}
+          {% if "threshold_percent_mito" in adata.uns["qc_cell_filter"] %}
           ({{ adata.uns["qc_cell_filter"]["threshold_percent_mito"] }})
+          {% else %}
+          (--)
+          {% endif %}
         </td>
-        {% endif %}
-        {% if "threshold_hemoglobin_counts" in adata.uns["qc_cell_filter"] %}
         <td>
           {{ adata.uns["qc_metrics"]["red_blood_cells_removed"] }}
+          {% if adata.uns["qc_cell_filter"]["threshold_hemoglobin_counts"] %}
           ({{ adata.uns["qc_cell_filter"]["threshold_hemoglobin_counts"] }})
+          {% else %}
+          (--)
+          {% endif %}
         </td>
-        {% endif %}
         <td>
           {{ adata.uns["qc_metrics"]["low_sequencing_saturation_cells_removed"] }}
           {% if adata.uns["qc_cell_filter"]["threshold_sequencing_saturation"] %}
-          (--)
-          {% else %}
           ({{ adata.uns["qc_cell_filter"]["threshold_sequencing_saturation"] }})
+          {% else %}
+          (--)
           {% endif %}
         </td>
         <td>
