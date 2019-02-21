@@ -1,7 +1,7 @@
+import os
 import subprocess
 
-SAMPLE_SCRIPT = """
-#!/usr/bin/env bash
+SAMPLE_SCRIPT = """#!/usr/bin/env bash
 {header}
 
 Rscript - <<eog
@@ -39,13 +39,18 @@ class Submitter(object):
         self.sample_script = self.sample_script.format(header=self.header, **kwargs)
 
     def submit(self, additional_script="", **kwargs):
-        cmd = f"""
-        {self.submit_command} <<eof
-        {{
-        {self.sample_script}
-        }} &
-        eof
-        """
+        save_file = os.path.join(self.output_dir, ".submit_rds_creation.sh")
+        with open(save_file, "w") as fout:
+            fout.write(self.sample_script)
+
+        cmd = f"{self.submit_command} {save_file}"
+        #cmd = f"""
+        #{self.submit_command} <<eof
+        #{{
+        #{self.sample_script}
+        #}}
+        #eof
+        #"""
         output = subprocess.check_output(cmd, shell=True).decode("ascii").strip()
         print(f"Rds creation submitted as {self.scheduler} job {output}.")
         print(f"Output will be located in [{self.output_dir}].")
