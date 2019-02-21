@@ -44,13 +44,6 @@ class Submitter(object):
             fout.write(self.sample_script)
 
         cmd = f"{self.submit_command} {save_file}"
-        #cmd = f"""
-        #{self.submit_command} <<eof
-        #{{
-        #{self.sample_script}
-        #}}
-        #eof
-        #"""
         output = subprocess.check_output(cmd, shell=True).decode("ascii").strip()
         print(f"Rds creation submitted as {self.scheduler} job {output}.")
         print(f"Output will be located in [{self.output_dir}].")
