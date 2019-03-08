@@ -175,6 +175,9 @@ def qc_violins(adata, return_fig=False):
         else:
             pl.violin(adata, key, **params)
 
+        if adata.obs[key].sum() < 1:
+            ax.set_ylim(0, 1)
+
         ax.set_title(adata.uns["obs_titles"][key])
         ax.set_xticks([])
         ax.set_ylabel("")
