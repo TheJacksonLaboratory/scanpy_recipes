@@ -21,7 +21,7 @@
 
     <ol class="list-group list-group-flush">
       <li class="list-group-item"><code>_report.html</code>: This analysis report.</li>
-      <li class="list-group-item"><code>_markers.csv</code>: a list of marker genes corresponding to the
+      <li class="list-group-item"><code>_markers.xlsx</code>: a list of marker genes corresponding to the
       clustering shown in this report.  Marker genes are genes that distinguish cells
       in one cluster from those in other clusters, but note that multiple clusters may
       share some markers and some clusters will not has as many (or any) marker genes
@@ -37,6 +37,9 @@
       below.</li>
     </ol>
 
+
+    {% if not adata.uns.get("is_aggregation", False) %}
+    <p></p>
     <p class="card-text">
       The software used to generate count matrices from your sequencing data, 10X
       Genomics CellRanger, generates some preliminary analysis information which we
@@ -44,8 +47,6 @@
     </p>
 
     <ol class="list-group list-group-flush">
-      <li class="list-group-item"><code>web_summary.html</code>: a page of metrics and other data recapitulating
-    the metrics shown at the beginning of this report.</li>
       <li class="list-group-item"><code>cloupe.cloupe</code>: an input file for 10X Genomic <a
     href="https://support.10xgenomics.com/single-cell-gene-expression/software/visualization/latest/what-is-loupe-cell-browser">Loupe
     Cell Browser</a>, an interactive tool for looking at clustering and gene
@@ -53,6 +54,7 @@
     differ from that shown above.  This is due to differences in QC, normalization, and
     clustering methods.
     </ol>
+    {% endif %}
   </div>
 </div>
 
