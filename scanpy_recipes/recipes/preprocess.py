@@ -11,6 +11,26 @@ from scanpy.tools.louvain import louvain
 
 
 def preprocess(adata_raw, n_top_genes=1000, scale=False):
+    """
+    Finds the highly variable genes.
+    The data is normalized, log transformed, and scaled.
+
+    Parameters
+    ----------
+    raw_adata
+        AnnData object which stores a data mtrix (adata.X), dataframe-like annotation  of
+        observations (adata.obs) and variables (adata.var) and an unstructured
+        dictionary-like annotation (adata.uns).
+    n_top_genes
+        Number of highly variable genes to keep (same method used by CellRanger).
+    scale
+        Applies standard scaling gene-wise. The mean expression is shifted to 0
+        and the variance is scaled to 1, for each gene.
+
+    Returns
+    -------
+    None
+    """
     adata_raw.obs["n_counts_total"] = adata_raw.obs["n_counts"].copy()
     adata = pp.normalize_per_cell(adata_raw, copy=True)
     adata.uns["raw_dtype"] = "normalized count"

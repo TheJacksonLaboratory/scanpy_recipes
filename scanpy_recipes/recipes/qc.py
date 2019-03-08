@@ -14,19 +14,33 @@ def read_mito_file(genome):
 
 def gen_qc(raw_adata):
     """
-    Appends new calculated metrics, sequencing_saturation,
+    Appends calculated metrics, sequencing_saturation,
     percent_mito, hemoglobin_counts, n_counts and n_cells to the raw data.
 
     Parameters
     ----------
     raw_adata
-           Annotated data matrix.
+        AnnData object which stores a data matrix (`adata.X`), dataframe-like annotation
+        of observations (`adata.obs`) and variables (`adata.var`) and a dictionary of
+        unstructured annotations (`adata.uns`).
 
     Returns
     -------
-    None
+    Appends
+    - the percentage of mitochondrial genes `percent_mito`,
+    - the counts of hemoglobin genes `hemoglobin_counts`,
+    - the UMI counts `n_counts`, and
+    - the gene counts `n_genes`
+    to the observation dataframe (`adata.obs`) of the AnnData object
 
+    Appends
+    - the UMI counts `n_counts` and
+    - the cell counts `n_cells`
+    to the variable dataframe (`adata.var`) of the AnnData object
+
+    Appends plot titles (`obs_titles`) to `adata.uns` for the data in `adata.obs`.
     """
+
     genome = raw_adata.uns["genome"]
     mt_query = read_mito_file(genome)
     if genome.lower().startswith("m"):
@@ -72,8 +86,42 @@ def run_qc(adata_raw,
            rbc_threshold=10,
            trial=False):
     """
+    Applies quality control thresholds to the raw data (`adata_raw`) using the metrics
+    calculated by `gen_qc()`.
 
+    Parameters
+    ----------
+    adata_raw
+        AnnData object
+    min_cells_per_gene
+        Minimum number of cells expressing a gene in order for the gene to pass QC filter.
+    min_counts_per_gene
+        Minimum number of UMI counts required for a gene to pass QC filter.
+    min_genes_per_cell
+        Minimum number of genes expressed in a cell for the cell to pass QC filter.
+    min_counts_per_cell
+        Minimum number of UMI counts required for a cell to pass QC filter.
+    sequencing_saturation
+        Sets minimum per-cell sequencing saturation percentage for each cell to pass
+        filter.  The sequencing saturation is defined as the fraction of confidently
+        mapped, valid cell-barcode, valid UMI reads that are non-unique. It is 1-UMI
+        counts/total reads.  A 50% sequencing saturation means, total reads = 2 X UMI
+        counts; while, a 90% sequencing saturation means, total reads = 10 X UMI counts
+    percent_mito
+        Sets maximum fraction of mitochondrial RNA that should be present in a cell to
+        pass QC filter.
+    rbc_threshold
+        Sets maximum hemoglobin gene counts for a cell to pass QC filter
+    trial
+        If `trial == False`, a subset of the raw data with all selected filters applied
+        (adata_qc) is returned.  If `trial == True`, the input raw data is retuned with
+        additional fields flagging the portion of the raw data that failed QC.
+
+    Returns
+    -------
+    AnnData object (subject to the value of `trial`)
     """
+
     orig_shape = adata_raw.shape
     adata = adata_raw.copy()
     adata_qc = adata_raw.copy()

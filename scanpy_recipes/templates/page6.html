@@ -38,8 +38,32 @@
         <div class="card-body">
           <h5 class="card-title">Visualize gene expression per cluster</h5>
           <p class="card-text">
-            Placeholder
+            Visualize the gene expression in a chosen cluster for one or multiple genes, under the <strong>Explore tab</strong>. There are 2 sections under the Explore tab:
           </p>
+          <ol>
+              <li><h6><span style="font-size: 11pt;">Expression (1 gene | multiple clusters)</span></h6></li>
+              <p>Use <strong>Expession</strong> to visualize the expression of one gene.</p>
+              <ul>
+                  <li>Enter a gene of interest and select a cluster from the drop-down list. click "Run" to display a 3 panel visual output.
+                  <ul>
+                      <li>Panel 1: <strong>3D plot</strong> of the gene expression across all cells in all clusters.</li>
+                      <li>Panel 2: <strong>2D plot</strong> of the gene expression across all cells in the cluster selected above.</li>
+                      <ol>
+                          <li>Click and drag over a group of cells on the 2D plot.</li>
+                          <li><strong>Download Expression</strong> at the top of panel 2 to get a <strong>gene-cell expression matrix</strong> file.</li>
+                      </ol>
+                      </li>
+                      <li>Panel 3: <strong>Violin plots</strong> with gene expression for all clusters. Each violin has the total cell count for each cluster (bottom of violin plots) as well as the count of cells expressing the gene(top of violin plots).</li>
+                  </ul>
+                  </li>
+              </ul>
+              <li><h6><span style="font-size: 11pt;">Panel Plot (multiple genes | 1 cluster)</span></h6></li>
+              <p>Use <strong>Panel Plot</strong> to visualize the expression of multiple genes of interest in one cluster at a time.</p>
+              <ul>
+                  <li>Select a cluster from the drop-down list, paste a comma separated list of genes(no spaces) and click "Run".</li>
+                  <li>The expression of each gene in the selected cluster is shown side by side in 2D plots, giving an <strong>overview of the abundance of cells expressing each gene</strong> in that specific cluster.</li>
+              </ul>
+          </ol>
         </div>
       </div>
 
@@ -47,8 +71,43 @@
         <div class="card-body">
           <h5 class="card-title">Compute coexpression of genes</h5>
           <p class="card-text">
-            Placeholder
+            Visualize co-expression of multiple genes in one or all clusters under the <strong>Co-expression tab</strong>. There are 3 sections under the Co-expression tab:
           </p>
+          <ol>
+              <li><h6><span style="font-size: 11pt;">AllClusters</span></h6></li>
+              <p>Use <strong>AllClusters</strong> to visualize expression of multiple genes across all clusters on a <strong>heatmap</strong>.</p>
+              <li><h6><span style="font-size: 11pt;">Selected cells</span></h6></li>
+              <p>Use <strong>Selected cells</strong> to visualize expression of multiple genes in selected cells within a cluster. The Selected cells sub-section has 2 panels:</p>
+              <ul>
+                  <li>Panel 1: <strong>2D plot</strong> of a cluster with gene expression across cells.</li>
+                  <ol>
+                      <li>Enter a gene of interest and select a cluster from the drop-down list.</li>
+                      <li><strong>Run</strong> to display a 2D image of the expression of the gene in that cluster.</li>
+                  </ol>
+                  <li>Panel 2: <strong>heatmap</strong> showing co-expression in select cells for all genes listed.</li>
+                  <ol>
+                      <li>Click and drag over a group of cells on the 2D image in panel 1.</li>
+                      <li>Paste a comma separated list of genes(no spaces) in panel 2.</li>
+                      <li><strong>Run</strong>.</li>
+                  </ol>
+              </ul>
+              <li><h6><span style="font-size: 11pt;">Binarize</span></h6></li>
+              <p>Use <strong>Binarize</strong> To vizualize cells that co-express genes of interest. This section has 2 panels:</p>
+              <ul>
+                  <li>Panel 1: <strong>2D plot</strong> of a cluster with <strong>co-expression across cells</strong>. Highlighted cells have all genes expressed as determined by a Gaussian mixture model (GMM)</li>
+                  <ol>
+                      <li>Select a cluster from the drop-down list</li>
+                      <li>Paste a comma separated list of genes(no spaces)</li>
+                      <li><strong>Run</strong>.</li>
+                      <li><strong>Download Expression +ve Cells in cluster</strong> to get a sheet with cells co-expressing the genes of interest for the slected cluster</li>
+                  </ol>
+                  <li>Panel 2: <strong>table</strong> with number of co-expressing cells for all clusters.</li>
+                  <ol>
+                      <li><strong>OFF</strong>: Number of cells not co-expressing genes submitted  by GMM.</li>
+                      <li><strong>ON</strong>: Number of cell co-expressing genes submitted by GMM.
+                  </ol>
+              </ul>
+          </ol>
         </div>
       </div>
 
@@ -56,8 +115,18 @@
         <div class="card-body">
           <h5 class="card-title">Interrogate cluster substructure</h5>
           <p class="card-text">
-            Placeholder
+           Can aid in identification of sub-clusters by simple differential gene expression between groups of selected cells. 
           </p>
+          <ul>
+              <li>Plots: <strong>2D plots</strong> for a cluster of interest.</li>
+              <ol>
+                  <li>Select a cluster from the drop-down list.</li>
+                  <li><strong>Plot</strong></li>
+                  <li>Click and drag over 2 different subsections of the cluster on each plot.</li>
+                  <li><strong>Differential</strong></li>
+              <li>Table: Sortable and searchable <strong>table of top differentially expressed genes</strong> between sub-clusters. <strong>Download DGE Table</strong> (bottom right of page) to get an excel file with all the information from that table</li>
+              </ol>
+          </ul>
         </div>
       </div>
     </div>
