@@ -41,9 +41,17 @@ mm10 = mmusculus
 [output_dirs]
 {SAMPLE_NAME} = {OUTPUT_DIR}
 
-[sample_info]
-target_cells = 1000
-10x_chemistry = v3
+[target_cells]
+{SAMPLE_NAME} = 6000
+
+[10x_chemistry]
+{SAMPLE_NAME} = v3
+
+[cellranger_version]
+{SAMPLE_NAME} = 3.0.2
+
+[reference_version]
+{SAMPLE_NAME} = 3.0.0
 """
 
 
@@ -69,7 +77,7 @@ def test_base():
     )
     adata_qc = sc.qc.run_qc(adata_raw, trial=False, **qc_params)
 
-    adata = sc.pp.preprocess(adata_qc, n_top_genes=1000, scale=True)
+    (adata_full, adata) = sc.pp.preprocess(adata_qc, n_top_genes=1000, scale=True)
     sc.pp.dimensionality_reduction(adata, n_neighbors=10, min_dist=0.5)
 
     sc.tl.cluster(adata)
@@ -77,7 +85,7 @@ def test_base():
     markers = sc.tl.find_marker_genes(adata, "cluster", log_fold_change=1.0)
     sc.export_markers(adata, "cluster")
 
-    sc.save_adata_to_rds(adata, cluster_key="cluster", submit=False)
+    sc.save_adata_to_rds(adata, cluster_key="cluster", generate_rds=False)
 
     redux_save_file = sc.save_adata(adata, "test")
 
