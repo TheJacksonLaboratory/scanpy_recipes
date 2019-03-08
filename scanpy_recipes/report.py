@@ -60,6 +60,17 @@ class SCBLReport(object):
             lstrip_blocks=True
         )
 
+    @staticmethod
+    def _add_fig_type(sampleids, figs, name):
+        if not figs:
+            raise Exception(f"No {name} figures provided.")
+        if isinstance(figs, matplotlib.figure.Figure):
+            figs = [figs]
+        assert len(sampleids) == len(figs), \
+            f"{len(sampleids)} sampleids but {len(figs)} {name} plots provided."
+
+        return dict((p1, fig_to_bytes(p2)) for p1, p2 in zip(sampleids, figs))
+
     def add_report_figures(
         self,
         adata,
@@ -67,38 +78,17 @@ class SCBLReport(object):
         scatters=None,
         ranks=None,
         cluster_key="cluster",
-        batch_key="sampleid"
+        batch_key="sampleid",
+        tag_key="hto_tag"
     ):
 
         img_dict = {"qc": dict()}
         sampleids = _get_sampleid(adata)
         adata.uns["sampleids"] = sampleids
 
-        if not violins:
-            raise Exception("Need QC violin plot.")
-        else:
-            if isinstance(violins, matplotlib.figure.Figure):
-                violins = [violins]
-            assert len(sampleids) == len(violins)
-            img_dict["qc"]["violin"] = dict((p1, fig_to_bytes(p2))
-                                            for p1, p2 in zip(sampleids, violins))
-
-        if not scatters:
-            raise Exception("Need QC scatter plot.")
-        else:
-            if isinstance(scatters, matplotlib.figure.Figure):
-                scatters = [scatters]
-            assert len(sampleids) == len(scatters)
-            img_dict["qc"]["scatter"] = dict((p1, fig_to_bytes(p2)) for p1, p2 in zip(sampleids, scatters))
-
-        if not ranks:
-            raise Exception("Need QC rank plot.")
-        else:
-            if isinstance(ranks, matplotlib.figure.Figure):
-                violins = [ranks]
-            assert len(sampleids) == len(ranks)
-            img_dict["qc"]["rank"] = dict((p1, fig_to_bytes(p2))
-                                           for p1, p2 in zip(sampleids, ranks))
+        img_dict["qc"]["violin"] = self._add_fig_type(sampleids, violins, "violin")
+        img_dict["qc"]["scatter"] = self._add_fig_type(sampleids, scatters, "scatter")
+        img_dict["qc"]["rank"] = self._add_fig_type(sampleids, ranks, "rank")
 
         fig = scatter(adata, basis="umap", color=cluster_key, legend_loc="on data", show=False).figure
         img_dict["clusters"] = fig_to_bytes(fig)
@@ -109,12 +99,17 @@ class SCBLReport(object):
             img_dict["batches"] = fig_to_bytes(fig)
             plt.close()
 
+        if tag_key in adata.obs_keys():
+            fig = scatter(adata, basis="umap", color=tag_key, legend_loc="right margin", show=False).figure
+            img_dict["hashtags"] = fig_to_bytes(fig)
+            plt.close()
+
         adata.uns["report_images"] = img_dict
 
 
     def _render_page(self, adata, n):
         template = self.env.get_template(f"page{n}.html")
-        return template.render(adata=adata)
+        return template.render(adata=adata, scanpy_version=sc_version)
 
 
     @staticmethod
@@ -147,7 +142,6 @@ class SCBLReport(object):
             css=css,
             js=js,
             html="\n".join(pages),
-            scanpy_version=sc_version
         )
 
         report_file = _get_output_file(adata, ext="html")
