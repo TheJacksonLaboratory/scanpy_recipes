@@ -115,7 +115,7 @@ def load_10x_data(sample_name: str, config: AnalysisConfig):
     # create output dir
     output_dir = config["output_dirs"][sample_name]
     if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
+        os.makedirs(output_dir)
 
     input_dir = config["input_dirs"][sample_name]
     for h5_file in glob.glob(f"{input_dir}/filtered_*matri*.h5"):
@@ -287,7 +287,7 @@ def write_csvs(adata, outdir, uns_keys=None):
         )
 
 
-def save_adata_to_rds(adata, cluster_key="cluster", n_dims=3, **submit_kwds):
+def save_adata_to_rds(adata, cluster_key="cluster", n_dims=3, generate_rds=True, **submit_kwds):
     """
     Creates CellView Rds file via a batch job.
 
@@ -308,6 +308,9 @@ def save_adata_to_rds(adata, cluster_key="cluster", n_dims=3, **submit_kwds):
     n_dims : {2, 3}
         the dimensionality of the embedding to save.  If `n_dims=2`, will set `V3` column
         to all zeros.
+    generate_rds : bool
+        flag to actually generate the rds or not after saving csv files.  useful for
+        testing
     submit_kwds : {"walltime", "mem", "scheduler"}
         keywords to pass to underlying job submitter:
         -   `"walltime"` format is `"HH:MM:SS"`, e.g. `walltime="00:30:00"`. Default is
@@ -363,7 +366,10 @@ def save_adata_to_rds(adata, cluster_key="cluster", n_dims=3, **submit_kwds):
         data.to_csv(outfile)
         logg.info(f"Saved {out_type} to {outfile}.")
 
-    submit_rds_job(sampleid, outdir, f"{sampleid}_{datestamp()}.Rds", **submit_kwds)
+    if generate_rds:
+        submit_rds_job(sampleid, outdir, f"{sampleid}_{datestamp()}.Rds", **submit_kwds)
+    else:
+        logg.info("Skipping Rds file submission/generation.")
 
 
 def get_marker_dataframe(adata, marker_key="auroc_markers"):
