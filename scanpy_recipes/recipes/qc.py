@@ -51,10 +51,16 @@ def gen_qc(raw_adata):
         rbc_gene = "HBB"
 
     mito_genes = raw_adata.var_names.intersection(mt_query)
+    mito_expr = raw_adata[:, mito_genes].X
+    if len(mito_expr.shape) < 2:
+        mito_expr = np.matrix(mito_expr.reshape(-1, 1))
     raw_adata.obs["percent_mito"] = np.sum(
-        raw_adata[:, mito_genes].X, axis=1).A1 / np.sum(raw_adata.X, axis=1).A1 * 100
+        mito_expr, axis=1).A1 / np.sum(raw_adata.X, axis=1).A1 * 100
 
-    raw_adata.obs["hemoglobin_counts"] = raw_adata[:, rbc_gene].X
+    if rbc_gene in raw_adata.var_names:
+        raw_adata.obs["hemoglobin_counts"] = raw_adata[:, rbc_gene].X
+    else:
+        raw_adata.obs["hemoglobin_counts"] = 0
 
     raw_adata.obs["n_counts"] = np.sum(raw_adata.X, axis=1).A1
     raw_adata.obs["n_genes"] = np.sum(raw_adata.X > 0, axis=1).A1
