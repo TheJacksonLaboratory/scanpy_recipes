@@ -58,20 +58,26 @@
         width="100%" />
     {% endfor %}
     <p class="card-text">
-      The raw counts matrix was lastly filtered by hand using the following criteria,
-      also depicted above.
-    </p>
+      The raw counts matrix was lastly filtered by hand using the criteria shown in the
+violin plots above, and listed in detail in the table below.
+      <a
+      class="text-info" data-toggle="collapse" aria-expanded="false"
+      id="qc-table-link" href="#qc-table" aria-controls="qc-table">
+Click here to see a table showing the number cells and genes that were
+<strong>excluded</strong> from the analysis.
+    </a></p>
 
-
-    <div class="table-hover table-responsive">
+    <div id="qc-table" aria-labelledby="qc-table-link" class="collapse table-hover table-responsive">
     <table class="table table-sm">
-    <caption>Quantities in (parentheses) denote the threshold used.</caption>
+    <caption>Quantities in (parentheses) denote the threshold used.  For example, "2
+(500)" under the "UMI counts" column means 2 cells were excluded due to having fewer than
+500 UMI counts.</caption>
     <thead>
     <tr>
       <th scope="col" colspan="1" rowspan="2">SampleID</th>
       <th style="text-align: right" scope="col" colspan="1" rowspan="2">QC'd Cells</th>
       <th style="text-align: right" scope="col" colspan="1" rowspan="2">QC'd Genes</th>
-      <th style="text-align: right" scope="col" colspan="5" rowspan="1">Cells Excluded by</th>
+      <th style="text-align: center" scope="col" colspan="5" rowspan="1">Cells Excluded by</th>
       <th style="text-align: right" scope="col" colspan="1" rowspan="2">Genes Excluded by cell count</th>
     </tr>
 
@@ -89,40 +95,52 @@
       {% for sampleid in adata.uns["sampleids"] %}
         <tr>
           <th scope="row">{{ sampleid }}</th>
+
           <td>
             {{ adata.uns["qc_metrics"][sampleid]["cells"] }}
           </td>
+
           <td>
             {{ adata.uns["qc_metrics"][sampleid]["genes"] }}
           </td>
+
           <td>
             {{ adata.uns["qc_metrics"][sampleid]["low_gene_cells_removed"] }}
             ({{ adata.uns["qc_cell_filter"][sampleid]["threshold_n_genes"] }})
           </td>
+
           <td>
             {{ adata.uns["qc_metrics"][sampleid]["low_count_cells_removed"] }}
             ({{ adata.uns["qc_cell_filter"][sampleid]["threshold_n_counts"] }})
           </td>
-          {% if "threshold_percent_mito" in adata.uns["qc_cell_filter"][sampleid] %}
+
           <td>
             {{ adata.uns["qc_metrics"][sampleid]["high_mtrna_cells_removed"] }}
+            {% if "threshold_percent_mito" in adata.uns["qc_cell_filter"][sampleid] %}
             ({{ adata.uns["qc_cell_filter"][sampleid]["threshold_percent_mito"] }})
+            {% else %}
+            (--)
+            {% endif %}
           </td>
-          {% endif %}
-          {% if "threshold_hemoglobin_counts" in adata.uns["qc_cell_filter"][sampleid] %}
+
           <td>
             {{ adata.uns["qc_metrics"][sampleid]["red_blood_cells_removed"] }}
+            {% if "threshold_hemoglobin_counts" in adata.uns["qc_cell_filter"][sampleid] %}
             ({{ adata.uns["qc_cell_filter"][sampleid]["threshold_hemoglobin_counts"] }})
+            {% else %}
+            (--)
+            {% endif %}
           </td>
-          {% endif %}
+
           <td>
             {{ adata.uns["qc_metrics"][sampleid]["low_sequencing_saturation_cells_removed"] }}
             {% if adata.uns["qc_cell_filter"][sampleid]["threshold_sequencing_saturation"] %}
-            (--)
-            {% else %}
             ({{ adata.uns["qc_cell_filter"][sampleid]["threshold_sequencing_saturation"] }})
+            {% else %}
+            (--)
             {% endif %}
           </td>
+
           <td>
             {{ adata.uns["qc_metrics"][sampleid]["low_count_genes_removed"] }}
             ({{ adata.uns["qc_gene_filter"][sampleid]["threshold_n_cells"] }})
@@ -136,17 +154,21 @@
         <td>
           {{ adata.uns["qc_metrics"]["cells"] }}
         </td>
+
         <td>
           {{ adata.uns["qc_metrics"]["genes"] }}
         </td>
+
         <td>
           {{ adata.uns["qc_metrics"]["low_gene_cells_removed"] }}
           ({{ adata.uns["qc_cell_filter"]["threshold_n_genes"] }})
         </td>
+
         <td>
           {{ adata.uns["qc_metrics"]["low_count_cells_removed"] }}
           ({{ adata.uns["qc_cell_filter"]["threshold_n_counts"] }})
         </td>
+
         <td>
           {{ adata.uns["qc_metrics"]["high_mtrna_cells_removed"] }}
           {% if "threshold_percent_mito" in adata.uns["qc_cell_filter"] %}
@@ -155,6 +177,7 @@
           (--)
           {% endif %}
         </td>
+
         <td>
           {{ adata.uns["qc_metrics"]["red_blood_cells_removed"] }}
           {% if adata.uns["qc_cell_filter"]["threshold_hemoglobin_counts"] %}
@@ -163,6 +186,7 @@
           (--)
           {% endif %}
         </td>
+
         <td>
           {{ adata.uns["qc_metrics"]["low_sequencing_saturation_cells_removed"] }}
           {% if adata.uns["qc_cell_filter"]["threshold_sequencing_saturation"] %}
@@ -171,6 +195,7 @@
           (--)
           {% endif %}
         </td>
+
         <td>
           {{ adata.uns["qc_metrics"]["low_count_genes_removed"] }}
           ({{ adata.uns["qc_gene_filter"]["threshold_n_cells"] }})
