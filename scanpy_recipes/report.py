@@ -46,7 +46,7 @@ def _load_resource(filename):
 
 class SCBLReport(object):
     MIN_PAGE = 1
-    MAX_PAGE = 5
+    MAX_PAGE = 6
 
     CSS_FILES = ("static/bootstrap.min.css", )
     JS_FILES = ("static/jquery-3.3.1.min.js",
