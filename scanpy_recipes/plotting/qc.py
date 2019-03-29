@@ -63,9 +63,9 @@ def _plot_thresholded_violin(ax, adata, key, min_thresh, max_thresh):
     print(key, min_thresh, max_thresh)
 
     params = dict(ax=ax, show=False, grid=300, cut=0)
-    sc.pl.violin(adata, key, color="0.9", linewidth=0.5, **params)
+    pl.violin(adata, key, color="0.9", linewidth=0.5, **params)
     if min_thresh:
-        sc.pl.violin(adata, key, color="red", stripplot=False, linewidth=0, **params)
+        pl.violin(adata, key, color="red", stripplot=False, linewidth=0, **params)
         verts = ax.collections[-1].get_paths()[0].vertices
 
         inds = True
@@ -84,7 +84,7 @@ def qc_violins(adata, return_fig=False):
     N = len(keys)
 
     thresholds = adata.uns.get("qc_cell_filter", None)
-    use_thresholds = dict(zip(keys, [False]*N))
+    use_thresholds = dict(zip(keys, [(False, False)]*N))
     if thresholds:
         use_thresholds = dict((key, thresholds.get("threshold_" + key, None)) for key in keys)
 
