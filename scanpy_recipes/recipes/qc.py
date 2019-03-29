@@ -84,7 +84,7 @@ def gen_qc(raw_adata):
         total_counts="UMIs", n_genes_by_counts="Genes",
         pct_counts_mitochondrial="mtRNA content",
         sequencing_saturation="Sequencing saturation",
-        pct_counts_hemoglobin="Hemoglobin counts"
+        total_counts_hemoglobin="Hemoglobin counts"
     )
 
 
@@ -92,10 +92,15 @@ def run_qc(adata_raw,
            min_cells_per_gene=3,
            min_counts_per_gene=3,
            min_genes_per_cell=200,
+           max_genes_per_cell=None,
            min_counts_per_cell=500,
-           sequencing_saturation=50.0,
-           percent_mito=50.0,
-           rbc_threshold=10,
+           max_counts_per_cell=None,
+           min_sequencing_saturation=None,
+           max_sequencing_saturation=None,
+           min_pct_mitochondrial=None,
+           max_pct_mitochondrial=50.0,
+           min_counts_hemoglobin=None,
+           max_counts_hemoglobin=10,
            trial=False):
     """
     Applies quality control thresholds to the raw data (`adata_raw`) using the metrics
@@ -109,20 +114,20 @@ def run_qc(adata_raw,
         Minimum number of cells expressing a gene in order for the gene to pass QC filter.
     min_counts_per_gene
         Minimum number of UMI counts required for a gene to pass QC filter.
-    min_genes_per_cell
+    {min,max}_genes_per_cell
         Minimum number of genes expressed in a cell for the cell to pass QC filter.
-    min_counts_per_cell
+    {min,max}_counts_per_cell
         Minimum number of UMI counts required for a cell to pass QC filter.
-    sequencing_saturation
+    {min,max}_sequencing_saturation
         Sets minimum per-cell sequencing saturation percentage for each cell to pass
         filter.  The sequencing saturation is defined as the fraction of confidently
         mapped, valid cell-barcode, valid UMI reads that are non-unique. It is 1-UMI
         counts/total reads.  A 50% sequencing saturation means, total reads = 2 X UMI
         counts; while, a 90% sequencing saturation means, total reads = 10 X UMI counts
-    percent_mito
+    {min,max}_pct_mitochondrial
         Sets maximum fraction of mitochondrial RNA that should be present in a cell to
         pass QC filter.
-    rbc_threshold
+    {min,max}_counts_hemoglobin
         Sets maximum hemoglobin gene counts for a cell to pass QC filter
     trial
         If `trial == False`, a subset of the raw data with all selected filters applied
@@ -141,19 +146,30 @@ def run_qc(adata_raw,
     filter_genes(adata_qc, min_cells=min_cells_per_gene)
     filter_genes(adata_qc, min_counts=min_counts_per_gene)
     adata.var["qc_fail_counts"] = ~adata.var_names.isin(adata_qc.var_names)
-    count_subset, n_counts = filter_cells(adata_qc.X, min_counts=min_counts_per_cell)
-    gene_subset, n_genes = filter_cells(adata_qc.X, min_genes=min_genes_per_cell)
-    adata.obs["qc_fail_counts"] = ~count_subset
-    adata.obs["qc_fail_genes"] = ~gene_subset
+
+    count_subset_min, n_counts_min = filter_cells(adata_qc.X, min_counts=min_counts_per_cell)
+    count_subset_max, n_counts_max = filter_cells(adata_qc.X, max_counts=max_counts_per_cell)
+    gene_subset_min, n_genes_min = filter_cells(adata_qc.X, min_genes=min_genes_per_cell)
+    gene_subset_max, n_genes_max = filter_cells(adata_qc.X, max_genes=max_genes_per_cell)
+    adata.obs["qc_fail_counts"] = ~(count_subset_min & count_subset_max)
+    adata.obs["qc_fail_genes"] = ~(gene_subset_min & gene_subset_max)
 
     seqsat_subset, mito_subset, rbc_subset = True, True, True
-    if sequencing_saturation:
-        seqsat_subset = adata_qc.obs["sequencing_saturation"] > sequencing_saturation
-    if percent_mito:
-        mito_subset = adata_qc.obs["pct_counts_mitochondrial"] < percent_mito
-    if rbc_threshold:
-        rbc_subset = adata_qc.obs["pct_counts_hemoglobin"] < rbc_threshold
-    keep_subset = seqsat_subset & mito_subset & rbc_subset & gene_subset & count_subset
+    if min_sequencing_saturation:
+        seqsat_subset &= adata_qc.obs["sequencing_saturation"] > min_sequencing_saturation
+    if max_sequencing_saturation:
+        seqsat_subset &= adata_qc.obs["sequencing_saturation"] < max_sequencing_saturation
+    if min_pct_mitochondrial:
+        mito_subset &= adata_qc.obs["pct_counts_mitochondrial"] > min_pct_mitochondrial
+    if max_pct_mitochondrial:
+        mito_subset &= adata_qc.obs["pct_counts_mitochondrial"] < max_pct_mitochondrial
+    if min_counts_hemoglobin:
+        rbc_subset &= adata_qc.obs["total_counts_hemoglobin"] < rbc_threshold
+    if max_counts_hemoglobin:
+        rbc_subset &= adata_qc.obs["total_counts_hemoglobin"] > rbc_threshold
+    keep_subset = count_subset_min & count_subset_max
+    keep_subset &= gene_subset_min & gene_subset_max
+    keep_subset &= seqsat_subset & mito_subset & rbc_subset
     adata_qc._inplace_subset_obs(keep_subset)
 
     adata.obs["qc_fail_seqsat"] = ~seqsat_subset
@@ -169,11 +185,14 @@ def run_qc(adata_raw,
         "threshold_n_counts": min_counts_per_gene
     }
     adata.uns["qc_cell_filter"] = {
-        "threshold_n_genes": min_genes_per_cell,
-        "threshold_n_counts": min_counts_per_cell,
-        "threshold_sequencing_saturation": sequencing_saturation,
-        "threshold_pct_counts_mitochondrial": percent_mito,
-        "threshold_pct_counts_hemoglobin": rbc_threshold
+        "threshold_n_genes": (min_genes_per_cell, max_genes_per_cell),
+        "threshold_n_counts": (min_counts_per_cell, max_counts_per_cell),
+        "threshold_sequencing_saturation": (min_sequencing_saturation,
+                                            max_sequencing_saturation),
+        "threshold_pct_counts_mitochondrial": (min_pct_mitochondrial,
+                                               max_pct_mitochondrial),
+        "threshold_total_counts_hemoglobin": (min_counts_hemoglobin,
+                                              max_counts_hemoglobin),
     }
 
     qc_metrics = {

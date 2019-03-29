@@ -59,18 +59,23 @@ def umi_rank_plot(adata_redux, return_fig=False):
         return fig
 
 
-def cut_violin(ax, threshold=0., cut_above=False, color="r"):
-    def cut_verts(polycol, threshold, cut_above, color):
-        v = polycol.get_paths()[0].vertices
-        if cut_above:
-            ind = v[:,1] <= threshold
-        else:
-            ind = v[:,1] >= threshold
-        polycol.set_verts([v[ind]])
-        polycol.set(facecolor=color)
-    # ax.collections[0] = first violins
-    # ax.collections[1] = first jitter
-    cut_verts(ax.collections[2], threshold, cut_above=cut_above, color=color)
+def _plot_thresholded_violin(ax, adata, key, min_thresh, max_thresh):
+    print(key, min_thresh, max_thresh)
+
+    params = dict(ax=ax, show=False, grid=300, cut=0)
+    sc.pl.violin(adata, key, color="0.9", linewidth=0.5, **params)
+    if min_thresh:
+        sc.pl.violin(adata, key, color="red", stripplot=False, linewidth=0, **params)
+        verts = ax.collections[-1].get_paths()[0].vertices
+
+        inds = True
+        if min_thresh:
+            inds &= (min_thresh <= verts[:, 1])
+            ax.axhline(min_thresh, 0.25, 0.75, color="red")
+        if max_thresh:
+            inds &= (verts[:, 1] <= max_thresh)
+            ax.axhline(max_thresh, 0.25, 0.75, color="red")
+        verts[inds, 0] = 0.
 
 
 def qc_violins(adata, return_fig=False):
@@ -83,25 +88,11 @@ def qc_violins(adata, return_fig=False):
     if thresholds:
         use_thresholds = dict((key, thresholds.get("threshold_" + key, None)) for key in keys)
 
-    flipped_keys = {"percent_mito", "hemoglobin_counts"}
-
     fig, axs = plt.subplots(1, N, figsize=(4*N, N), dpi=200)
     for ax, key in zip(axs.flat, keys):
-        threshold = use_thresholds[key]
-        print(key, threshold)
-        params = dict(color="0.9", show=False, ax=ax, cut=0, gridsize=300,
-                      linewidth=0.50)
-        if threshold:
-            ax = pl.violin(adata, key, **params)
-            ax = pl.violin(adata, key, jitter=False, **params)
-            cut_violin(ax, threshold=threshold,
-                       cut_above=False if key in flipped_keys else True)
-            ax.axhline(threshold, xmin=0.25, xmax=0.75, color="r")
-            #return ax
-        else:
-            pl.violin(adata, key, **params)
+        _plot_thresholded_violin(ax, adata, key, *use_thresholds[key])
 
-        if adata.obs[key].sum() < 1:
+        if adata.obs[key].isnull().all() or adata.obs[key].sum() < 1:
             ax.set_ylim(0, 1)
 
         ax.set_title(adata.uns["obs_titles"][key])
