@@ -60,28 +60,28 @@ def gen_qc(raw_adata):
 
     genome = raw_adata.uns["genome"]
     mt_query = read_mito_file(genome)
-    mt_query = read_hemoglobin_file(genome)
+    hemo_query = read_hemoglobin_file(genome)
 
-    raw_adata.var["mitochondrial"] = raw_data.var_names.isin(mt_query)
-    raw_adata.var["hemoglobin"] = raw_data.var_names.isin(hemo_query)
+    raw_adata.var["mitochondrial"] = raw_adata.var_names.isin(mt_query)
+    raw_adata.var["hemoglobin"] = raw_adata.var_names.isin(hemo_query)
 
     calculate_qc_metrics(
-        adata_raw,
+        raw_adata,
         qc_vars=("mitochondrial", "hemoglobin"),
         inplace=True
     )
 
-    raw_adata.uns["10x_umi_cutoff"] = np.min(raw_adata.obs["n_counts"].astype(int))
+    raw_adata.uns["10x_umi_cutoff"] = np.min(raw_adata.obs["total_counts"].astype(int))
 
     raw_cells, raw_genes = raw_adata.shape
     raw_adata.uns["raw_cells"] = raw_cells
     raw_adata.uns["raw_genes"] = raw_genes
-    raw_adata.uns["empty_genes"] = np.sum(raw_adata.var["n_cells"] == 0).astype(int)
+    raw_adata.uns["empty_genes"] = np.sum(raw_adata.var["n_cells_by_counts"] == 0).astype(int)
     raw_adata.uns["10x_metrics"]["important"]["Median Sequencing Saturation per Cell"] = \
         f"{raw_adata.obs['sequencing_saturation'].median():.1f}%"
 
     raw_adata.uns["obs_titles"] = dict(
-        n_counts="UMIs", n_genes="Genes",
+        total_counts="UMIs", n_genes_by_counts="Genes",
         pct_counts_mitochondrial="mtRNA content",
         sequencing_saturation="Sequencing saturation",
         pct_counts_hemoglobin="Hemoglobin counts"

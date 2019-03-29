@@ -31,9 +31,9 @@ def preprocess(adata_raw, n_top_genes=1000, scale=False):
     `AnnData` object where `.X` is normalized and log transformed (possibly scaled) and
     `.var` contains the `highly_variable` column
     """
-    adata_raw.obs["n_counts_total"] = adata_raw.obs["n_counts"].copy()
-    adata.uns["raw_dtype"] = "normalized count"
-    adata.uns["n_top_genes"] = n_top_genes
+    #adata_raw.obs["n_counts_total"] = adata_raw.obs["n_counts"].copy()
+    adata_raw.uns["raw_dtype"] = "normalized count"
+    adata_raw.uns["n_top_genes"] = n_top_genes
 
     adata = pp.normalize_per_cell(adata_raw, copy=True)
     adata.raw = adata
@@ -46,7 +46,7 @@ def preprocess(adata_raw, n_top_genes=1000, scale=False):
     )
 
     if scale:
-        pp.scale(adata_filt)
+        pp.scale(adata)
 
     return adata
 

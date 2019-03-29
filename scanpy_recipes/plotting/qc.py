@@ -149,7 +149,8 @@ def cut_violin(ax, threshold=0., cut_above=False, color="r"):
 
 
 def qc_violins(adata, return_fig=False):
-    keys = sorted(filter(lambda s: not s.startswith("qc"), adata.obs_keys()))
+    keys = adata.uns["obs_titles"].keys()
+    #keys = sorted(filter(lambda s: not s.startswith("qc"), adata.obs_keys()))
     N = len(keys)
 
     thresholds = adata.uns.get("qc_cell_filter", None)

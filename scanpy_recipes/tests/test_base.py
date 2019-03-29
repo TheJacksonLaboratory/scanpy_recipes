@@ -77,7 +77,7 @@ def test_base():
     )
     adata_qc = sc.qc.run_qc(adata_raw, trial=False, **qc_params)
 
-    (adata_full, adata) = sc.pp.preprocess(adata_qc, n_top_genes=1000, scale=True)
+    adata = sc.pp.preprocess(adata_qc, n_top_genes=1000, scale=True)
     sc.pp.dimensionality_reduction(adata, n_neighbors=10, min_dist=0.5)
 
     sc.tl.cluster(adata)
