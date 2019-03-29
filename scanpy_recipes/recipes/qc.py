@@ -185,8 +185,8 @@ def run_qc(adata_raw,
         "threshold_n_counts": min_counts_per_gene
     }
     adata.uns["qc_cell_filter"] = {
-        "threshold_n_genes": (min_genes_per_cell, max_genes_per_cell),
-        "threshold_n_counts": (min_counts_per_cell, max_counts_per_cell),
+        "threshold_n_genes_by_counts": (min_genes_per_cell, max_genes_per_cell),
+        "threshold_total_counts": (min_counts_per_cell, max_counts_per_cell),
         "threshold_sequencing_saturation": (min_sequencing_saturation,
                                             max_sequencing_saturation),
         "threshold_pct_counts_mitochondrial": (min_pct_mitochondrial,
