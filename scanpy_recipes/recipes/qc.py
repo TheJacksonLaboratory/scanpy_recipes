@@ -143,10 +143,6 @@ def run_qc(adata_raw,
     adata = adata_raw.copy()
     adata_qc = adata_raw.copy()
 
-    filter_genes(adata_qc, min_cells=min_cells_per_gene)
-    filter_genes(adata_qc, min_counts=min_counts_per_gene)
-    adata.var["qc_fail_counts"] = ~adata.var_names.isin(adata_qc.var_names)
-
     count_subset_min, n_counts_min = filter_cells(adata_qc.X, min_counts=min_counts_per_cell)
     count_subset_max, n_counts_max = filter_cells(adata_qc.X, max_counts=max_counts_per_cell)
     gene_subset_min, n_genes_min = filter_cells(adata_qc.X, min_genes=min_genes_per_cell)
@@ -164,9 +160,9 @@ def run_qc(adata_raw,
     if max_pct_mitochondrial:
         mito_subset &= adata_qc.obs["pct_counts_mitochondrial"] < max_pct_mitochondrial
     if min_counts_hemoglobin:
-        rbc_subset &= adata_qc.obs["total_counts_hemoglobin"] < rbc_threshold
+        rbc_subset &= adata_qc.obs["total_counts_hemoglobin"] > min_counts_hemoglobin
     if max_counts_hemoglobin:
-        rbc_subset &= adata_qc.obs["total_counts_hemoglobin"] > rbc_threshold
+        rbc_subset &= adata_qc.obs["total_counts_hemoglobin"] < max_counts_hemoglobin
     keep_subset = count_subset_min & count_subset_max
     keep_subset &= gene_subset_min & gene_subset_max
     keep_subset &= seqsat_subset & mito_subset & rbc_subset
@@ -178,6 +174,10 @@ def run_qc(adata_raw,
     adata.obs["qc_fail"] = "fail"
     adata.obs.loc[keep_subset, "qc_fail"] = "pass"
     adata.obs["qc_fail"] = adata.obs["qc_fail"].astype("category")
+
+    filter_genes(adata_qc, min_cells=min_cells_per_gene)
+    filter_genes(adata_qc, min_counts=min_counts_per_gene)
+    adata.var["qc_fail_counts"] = ~adata.var_names.isin(adata_qc.var_names)
 
     n_rbcs = 0 if isinstance(rbc_subset, bool) else int(sum(~rbc_subset))
     adata.uns["qc_gene_filter"] = {
