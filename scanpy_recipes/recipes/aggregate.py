@@ -78,6 +78,7 @@ def aggregate(*adatas, combined_output_dir=None,
     # as documented in the warning here:
     # https://anndata.readthedocs.io/en/latest/anndata.AnnData.concatenate.html#anndata.AnnData.concatenate
     _fix_var_nans(combined, "gene_ids", "gene_ids-", del_col=del_batch_var)
+    _fix_var_nans(combined, "total_counts", "total_counts-", del_col=del_batch_var)
     _fix_var_nans(combined, "n_counts", "n_counts-", del_col=del_batch_var)
     _fix_var_nans(combined, "n_cells", "n_cells-", del_col=del_batch_var)
 

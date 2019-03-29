@@ -337,9 +337,9 @@ def save_adata_to_rds(adata, cluster_key="cluster", n_dims=3, generate_rds=True,
 
     features = pd.DataFrame({"Associated.Gene.Name": tmpd.var.index, "Chromosome.Name": 1}, index=counts.index)
 
-    counts.loc["ENSGGENES", :] = quantile_limit(adata.obs, "n_genes")
-    counts.loc["ENSGUMI", :] = quantile_limit(adata.obs, "n_counts_total")
-    counts.loc["ENSGMITO", :] = quantile_limit(adata.obs, "percent_mito")
+    counts.loc["ENSGGENES", :] = quantile_limit(adata.obs, "n_genes_by_counts")
+    counts.loc["ENSGUMI", :] = quantile_limit(adata.obs, "total_counts")
+    counts.loc["ENSGMITO", :] = quantile_limit(adata.obs, "pct_counts_mitochondrial")
     counts.loc["ENSGSEQSAT", :] = quantile_limit(adata.obs, "sequencing_saturation")
     if adata.uns.get("is_aggregation", None):
         counts.loc["ENSGSAMP", :] = adata.obs.batch.cat.codes

@@ -4,13 +4,30 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from collections import OrderedDict
 from scanpy import queries
-from scanpy.preprocessing.simple import filter_cells, filter_genes
+from scanpy.preprocessing import filter_cells, filter_genes
+from scanpy.preprocessing import calculate_qc_metrics
+
+
+# This is a stopgap while scanpy issues #242
+# https://github.com/theislab/scanpy/issues/242
+# gets resolved
+def read_data_file(var_type, genome):
+    return pd.read_csv(
+        pkg_resources.resource_filename(
+            "scanpy_recipes",
+            f"data/{var_type}_genes.{genome}.csv"),
+        index_col=1,
+        header=0
+    ).index
+
+
+def read_hemoglobin_file(genome):
+    return read_data_file("hemoglobin", genome)
 
 
 def read_mito_file(genome):
-    return pd.read_csv(pkg_resources.resource_filename("scanpy_recipes",
-                                                       f"data/mito_genes.{genome}.csv"),
-                       index_col=1, header=0).index
+    return read_data_file("mito", genome)
+
 
 def gen_qc(raw_adata):
     """
@@ -43,42 +60,31 @@ def gen_qc(raw_adata):
 
     genome = raw_adata.uns["genome"]
     mt_query = read_mito_file(genome)
-    if genome.lower().startswith("m"):
-        #mt_query = queries.mitochondrial_genes("useast.ensembl.org", "mmusculus")
-        rbc_gene = "Hbb-bs"
-    else:
-        #mt_query = queries.mitochondrial_genes("useast.ensembl.org", "hsapiens")
-        rbc_gene = "HBB"
+    hemo_query = read_hemoglobin_file(genome)
 
-    mito_genes = raw_adata.var_names.intersection(mt_query)
-    mito_expr = raw_adata[:, mito_genes].X
-    if len(mito_expr.shape) < 2:
-        mito_expr = np.matrix(mito_expr.reshape(-1, 1))
-    raw_adata.obs["percent_mito"] = np.sum(
-        mito_expr, axis=1).A1 / np.sum(raw_adata.X, axis=1).A1 * 100
+    raw_adata.var["mitochondrial"] = raw_adata.var_names.isin(mt_query)
+    raw_adata.var["hemoglobin"] = raw_adata.var_names.isin(hemo_query)
 
-    if rbc_gene in raw_adata.var_names:
-        raw_adata.obs["hemoglobin_counts"] = raw_adata[:, rbc_gene].X
-    else:
-        raw_adata.obs["hemoglobin_counts"] = 0
+    calculate_qc_metrics(
+        raw_adata,
+        qc_vars=("mitochondrial", "hemoglobin"),
+        inplace=True
+    )
 
-    raw_adata.obs["n_counts"] = np.sum(raw_adata.X, axis=1).A1
-    raw_adata.obs["n_genes"] = np.sum(raw_adata.X > 0, axis=1).A1
-    raw_adata.var["n_counts"] = np.sum(raw_adata.X, axis=0).A1
-    raw_adata.var["n_cells"] = np.sum(raw_adata.X > 0, axis=0).A1
-    raw_adata.uns["10x_umi_cutoff"] = np.min(raw_adata.obs["n_counts"].astype(int))
+    raw_adata.uns["10x_umi_cutoff"] = np.min(raw_adata.obs["total_counts"].astype(int))
 
     raw_cells, raw_genes = raw_adata.shape
     raw_adata.uns["raw_cells"] = raw_cells
     raw_adata.uns["raw_genes"] = raw_genes
-    raw_adata.uns["empty_genes"] = np.sum(raw_adata.var["n_cells"] == 0).astype(int)
+    raw_adata.uns["empty_genes"] = np.sum(raw_adata.var["n_cells_by_counts"] == 0).astype(int)
     raw_adata.uns["10x_metrics"]["important"]["Median Sequencing Saturation per Cell"] = \
         f"{raw_adata.obs['sequencing_saturation'].median():.1f}%"
 
     raw_adata.uns["obs_titles"] = dict(
-        n_counts="UMIs", n_genes="Genes", percent_mito="mtRNA content",
+        total_counts="UMIs", n_genes_by_counts="Genes",
+        pct_counts_mitochondrial="mtRNA content",
         sequencing_saturation="Sequencing saturation",
-        hemoglobin_counts="Hemoglobin counts"
+        total_counts_hemoglobin="Hemoglobin counts"
     )
 
 
@@ -86,10 +92,15 @@ def run_qc(adata_raw,
            min_cells_per_gene=3,
            min_counts_per_gene=3,
            min_genes_per_cell=200,
+           max_genes_per_cell=None,
            min_counts_per_cell=500,
-           sequencing_saturation=50.0,
-           percent_mito=50.0,
-           rbc_threshold=10,
+           max_counts_per_cell=None,
+           min_sequencing_saturation=None,
+           max_sequencing_saturation=None,
+           min_pct_mitochondrial=None,
+           max_pct_mitochondrial=50.0,
+           min_counts_hemoglobin=None,
+           max_counts_hemoglobin=10,
            trial=False):
     """
     Applies quality control thresholds to the raw data (`adata_raw`) using the metrics
@@ -103,20 +114,20 @@ def run_qc(adata_raw,
         Minimum number of cells expressing a gene in order for the gene to pass QC filter.
     min_counts_per_gene
         Minimum number of UMI counts required for a gene to pass QC filter.
-    min_genes_per_cell
+    {min,max}_genes_per_cell
         Minimum number of genes expressed in a cell for the cell to pass QC filter.
-    min_counts_per_cell
+    {min,max}_counts_per_cell
         Minimum number of UMI counts required for a cell to pass QC filter.
-    sequencing_saturation
+    {min,max}_sequencing_saturation
         Sets minimum per-cell sequencing saturation percentage for each cell to pass
         filter.  The sequencing saturation is defined as the fraction of confidently
         mapped, valid cell-barcode, valid UMI reads that are non-unique. It is 1-UMI
         counts/total reads.  A 50% sequencing saturation means, total reads = 2 X UMI
         counts; while, a 90% sequencing saturation means, total reads = 10 X UMI counts
-    percent_mito
+    {min,max}_pct_mitochondrial
         Sets maximum fraction of mitochondrial RNA that should be present in a cell to
         pass QC filter.
-    rbc_threshold
+    {min,max}_counts_hemoglobin
         Sets maximum hemoglobin gene counts for a cell to pass QC filter
     trial
         If `trial == False`, a subset of the raw data with all selected filters applied
@@ -132,22 +143,29 @@ def run_qc(adata_raw,
     adata = adata_raw.copy()
     adata_qc = adata_raw.copy()
 
-    filter_genes(adata_qc, min_cells=min_cells_per_gene)
-    filter_genes(adata_qc, min_counts=min_counts_per_gene)
-    adata.var["qc_fail_counts"] = ~adata.var_names.isin(adata_qc.var_names)
-    count_subset, n_counts = filter_cells(adata_qc.X, min_counts=min_counts_per_cell)
-    gene_subset, n_genes = filter_cells(adata_qc.X, min_genes=min_genes_per_cell)
-    adata.obs["qc_fail_counts"] = ~count_subset
-    adata.obs["qc_fail_genes"] = ~gene_subset
+    count_subset_min, n_counts_min = filter_cells(adata_qc.X, min_counts=min_counts_per_cell)
+    count_subset_max, n_counts_max = filter_cells(adata_qc.X, max_counts=max_counts_per_cell)
+    gene_subset_min, n_genes_min = filter_cells(adata_qc.X, min_genes=min_genes_per_cell)
+    gene_subset_max, n_genes_max = filter_cells(adata_qc.X, max_genes=max_genes_per_cell)
+    adata.obs["qc_fail_counts"] = ~(count_subset_min & count_subset_max)
+    adata.obs["qc_fail_genes"] = ~(gene_subset_min & gene_subset_max)
 
     seqsat_subset, mito_subset, rbc_subset = True, True, True
-    if sequencing_saturation:
-        seqsat_subset = adata_qc.obs["sequencing_saturation"] > sequencing_saturation
-    if percent_mito:
-        mito_subset = adata_qc.obs["percent_mito"] < percent_mito
-    if rbc_threshold:
-        rbc_subset = adata_qc.obs["hemoglobin_counts"] < rbc_threshold
-    keep_subset = seqsat_subset & mito_subset & rbc_subset & gene_subset & count_subset
+    if min_sequencing_saturation:
+        seqsat_subset &= adata_qc.obs["sequencing_saturation"] > min_sequencing_saturation
+    if max_sequencing_saturation:
+        seqsat_subset &= adata_qc.obs["sequencing_saturation"] < max_sequencing_saturation
+    if min_pct_mitochondrial:
+        mito_subset &= adata_qc.obs["pct_counts_mitochondrial"] > min_pct_mitochondrial
+    if max_pct_mitochondrial:
+        mito_subset &= adata_qc.obs["pct_counts_mitochondrial"] < max_pct_mitochondrial
+    if min_counts_hemoglobin:
+        rbc_subset &= adata_qc.obs["total_counts_hemoglobin"] > min_counts_hemoglobin
+    if max_counts_hemoglobin:
+        rbc_subset &= adata_qc.obs["total_counts_hemoglobin"] < max_counts_hemoglobin
+    keep_subset = count_subset_min & count_subset_max
+    keep_subset &= gene_subset_min & gene_subset_max
+    keep_subset &= seqsat_subset & mito_subset & rbc_subset
     adata_qc._inplace_subset_obs(keep_subset)
 
     adata.obs["qc_fail_seqsat"] = ~seqsat_subset
@@ -157,17 +175,24 @@ def run_qc(adata_raw,
     adata.obs.loc[keep_subset, "qc_fail"] = "pass"
     adata.obs["qc_fail"] = adata.obs["qc_fail"].astype("category")
 
+    filter_genes(adata_qc, min_cells=min_cells_per_gene)
+    filter_genes(adata_qc, min_counts=min_counts_per_gene)
+    adata.var["qc_fail_counts"] = ~adata.var_names.isin(adata_qc.var_names)
+
     n_rbcs = 0 if isinstance(rbc_subset, bool) else int(sum(~rbc_subset))
     adata.uns["qc_gene_filter"] = {
         "threshold_n_cells": min_cells_per_gene,
         "threshold_n_counts": min_counts_per_gene
     }
     adata.uns["qc_cell_filter"] = {
-        "threshold_n_genes": min_genes_per_cell,
-        "threshold_n_counts": min_counts_per_cell,
-        "threshold_sequencing_saturation": sequencing_saturation,
-        "threshold_percent_mito": percent_mito,
-        "threshold_hemoglobin_counts": rbc_threshold
+        "threshold_n_genes": (min_genes_per_cell, max_genes_per_cell),
+        "threshold_n_counts": (min_counts_per_cell, max_counts_per_cell),
+        "threshold_sequencing_saturation": (min_sequencing_saturation,
+                                            max_sequencing_saturation),
+        "threshold_pct_counts_mitochondrial": (min_pct_mitochondrial,
+                                               max_pct_mitochondrial),
+        "threshold_total_counts_hemoglobin": (min_counts_hemoglobin,
+                                              max_counts_hemoglobin),
     }
 
     qc_metrics = {

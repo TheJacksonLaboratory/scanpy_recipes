@@ -70,14 +70,19 @@ def test_base():
         min_cells_per_gene=3,
         min_counts_per_gene=3,
         min_counts_per_cell=1000,
+        max_counts_per_cell=30000,
         min_genes_per_cell=500,
-        sequencing_saturation=None,
-        percent_mito=20.0,
-        rbc_threshold=10
+        max_genes_per_cell=6000,
+        min_sequencing_saturation=None,
+        max_sequencing_saturation=None,
+        min_pct_mitochondrial=None,
+        max_pct_mitochondrial=20.0,
+        min_counts_hemoglobin=None,
+        max_counts_hemoglobin=10,
     )
     adata_qc = sc.qc.run_qc(adata_raw, trial=False, **qc_params)
 
-    (adata_full, adata) = sc.pp.preprocess(adata_qc, n_top_genes=1000, scale=True)
+    adata = sc.pp.preprocess(adata_qc, n_top_genes=1000, scale=True)
     sc.pp.dimensionality_reduction(adata, n_neighbors=10, min_dist=0.5)
 
     sc.tl.cluster(adata)
