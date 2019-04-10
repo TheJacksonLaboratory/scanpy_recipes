@@ -11,8 +11,9 @@
 
   <div id="redux-card" class="card-body collapse pb-0" aria-labelledby="redux-heading">
     <p class="card-text">
-      The expression profiles of each cell at the {{ adata.uns["n_top_genes"] }} most
-      highly variable genes (as measured by dispersion
+      The expression profiles of each cell at the
+      <em class="text-info">{{ adata.uns["n_top_genes"] }}</em> most highly variable genes
+      (as measured by dispersion
       [<a target="_blank" href="https://doi.org/10.1038/nbt.3192">Satija et al., 2015</a>]
       [<a target="_blank" href="https://doi.org/10.1038/ncomms14049">Zheng et al., 2017</a>])
       were used for neighborhood graph generation (using
@@ -29,7 +30,15 @@
     {% if adata.uns.get("is_aggregation", False) %}
     <div class="card card-body px-0 border-0">
       <p class="card-text">
-        Dimensionality reduction color coded by sample is shown below.
+        Because this experiment consists of multiple samples, these samples were filtered
+        independently then aggregated together.  The neighborhood graph was
+        batch-corrected using the batch correction software BBKNN
+        [<a target="_blank" href="https://www.biorxiv.org/content/10.1101/397042v2">Park
+        et al., 2018</a>].  The rest of the analysis (UMAP, clustering, etc.) was otherwise
+        performed as described above.
+      </p>
+      <p class="card-text">
+        Dimensionality reduction color-coded by sample ID is shown below.
       </p>
       <img class="card-img w-50 mx-auto"
         src="data:image/png;base64,{{ adata.uns['report_images']['batches'] }}"
