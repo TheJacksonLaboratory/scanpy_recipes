@@ -60,11 +60,9 @@ def umi_rank_plot(adata_redux, return_fig=False):
 
 
 def _plot_thresholded_violin(ax, adata, key, min_thresh, max_thresh):
-    print(key, min_thresh, max_thresh)
-
     params = dict(ax=ax, show=False, grid=300, cut=0)
     pl.violin(adata, key, color="0.9", linewidth=0.5, **params)
-    if min_thresh:
+    if min_thresh or max_thresh:
         pl.violin(adata, key, color="red", stripplot=False, linewidth=0, **params)
         verts = ax.collections[-1].get_paths()[0].vertices
 
@@ -105,7 +103,7 @@ def qc_violins(adata, return_fig=False):
         x=0.02, y=0.5, s=f"Sample: {adata.uns['sampleid']}",
         rotation=90, va='center', ha='right', fontsize='xx-large'
     )
-    fig.subplots_adjust(left=0.05)
+    fig.subplots_adjust(left=0.07)
 
     if return_fig:
         return fig

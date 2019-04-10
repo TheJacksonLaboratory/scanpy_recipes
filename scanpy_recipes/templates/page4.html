@@ -9,10 +9,11 @@
     </a>
   </div>
 
-  <div id="redux-card" class="card-body collapse" aria-labelledby="redux-heading">
+  <div id="redux-card" class="card-body collapse pb-0" aria-labelledby="redux-heading">
     <p class="card-text">
-      The expression profiles of each cell at the {{ adata.uns["n_top_genes"] }} most
-      highly variable genes (as measured by dispersion
+      The expression profiles of each cell at the
+      <em class="text-info">{{ adata.uns["n_top_genes"] }}</em> most highly variable genes
+      (as measured by dispersion
       [<a target="_blank" href="https://doi.org/10.1038/nbt.3192">Satija et al., 2015</a>]
       [<a target="_blank" href="https://doi.org/10.1038/ncomms14049">Zheng et al., 2017</a>])
       were used for neighborhood graph generation (using
@@ -25,21 +26,41 @@
       Subclustering was performed ad hoc on a per-cluster basis to separate visually
       distinct subpopulations of cells.
     </p>
+
     {% if adata.uns.get("is_aggregation", False) %}
-    <p class="card-text">
-      Dimensionality reduction color coded by sample is shown below.
-    </p>
-    <img class="mx-auto d-block"
-      src="data:image/png;base64,{{ adata.uns['report_images']['batches'] }}"
-      alt="UMAP embedding and sample-based labeling"
-      width="100%" />
+    <div class="card card-body px-0 border-0">
+      <p class="card-text">
+        Because this experiment consists of multiple samples, these samples were filtered
+        independently then aggregated together.  The neighborhood graph was
+        batch-corrected using the batch correction software BBKNN
+        [<a target="_blank" href="https://www.biorxiv.org/content/10.1101/397042v2">Park
+        et al., 2018</a>].  The rest of the analysis (UMAP, clustering, etc.) was otherwise
+        performed as described above.
+      </p>
+      <p class="card-text">
+        Dimensionality reduction color-coded by sample ID is shown below.
+      </p>
+      <img class="card-img w-50 mx-auto"
+        src="data:image/png;base64,{{ adata.uns['report_images']['batches'] }}"
+        alt="UMAP embedding and sample-based labeling"
+        />
+    </div>
     {% endif %}
-    <p class="card-text">
-      Preliminary clustering is shown below.
-    </p>
-    <img class="mx-auto d-block"
-      src="data:image/png;base64,{{ adata.uns['report_images']['clusters'] }}"
-      alt="UMAP embedding and community-based clustering"
-      width="100%" />
+
+    <div class="card card-body px-0 border-0">
+      <p class="card-text">
+        Preliminary clustering is shown below.
+      </p>
+      <img class="card-img w-50 mx-auto"
+        src="data:image/png;base64,{{ adata.uns['report_images']['clusters'] }}"
+        alt="UMAP embedding and community-based clustering"
+        />
+    </div>
+    <div class="card-text bg-transparent border-0">
+      <sup class="text-secondary font-weight-light font-italic">
+      Note: all images are 600dpi PNG files; right-click and open in a new tab to view at full
+      resolution.
+      </sup>
+    </div>
   </div>
 </div>

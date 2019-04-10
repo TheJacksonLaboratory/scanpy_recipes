@@ -92,15 +92,15 @@ def run_qc(adata_raw,
            min_cells_per_gene=3,
            min_counts_per_gene=3,
            min_genes_per_cell=200,
-           max_genes_per_cell=None,
+           max_genes_per_cell=np.inf,
            min_counts_per_cell=500,
-           max_counts_per_cell=None,
-           min_sequencing_saturation=None,
-           max_sequencing_saturation=None,
-           min_pct_mitochondrial=None,
-           max_pct_mitochondrial=50.0,
-           min_counts_hemoglobin=None,
-           max_counts_hemoglobin=10,
+           max_counts_per_cell=np.inf,
+           min_sequencing_saturation=-np.inf,
+           max_sequencing_saturation=np.inf,
+           min_pct_mitochondrial=-np.inf,
+           max_pct_mitochondrial=np.inf,
+           min_counts_hemoglobin=-np.inf,
+           max_counts_hemoglobin=np.inf,
            trial=False):
     """
     Applies quality control thresholds to the raw data (`adata_raw`) using the metrics
@@ -139,30 +139,51 @@ def run_qc(adata_raw,
     AnnData object (subject to the value of `trial`)
     """
 
+    keywords = (
+        min_cells_per_gene, min_counts_per_gene, min_genes_per_cell, max_genes_per_cell,
+        min_counts_per_cell, max_counts_per_cell, min_sequencing_saturation,
+        max_sequencing_saturation, min_pct_mitochondrial, max_pct_mitochondrial,
+        min_counts_hemoglobin, max_counts_hemoglobin
+    )
+
+    if None in keywords:
+        raise ValueError(
+            "Cannot use `None` as a keyword.  Please use `-np.inf` to represent lower "
+            "bounds and `np.inf` to represent upper bounds."
+        )
+
     orig_shape = adata_raw.shape
     adata = adata_raw.copy()
     adata_qc = adata_raw.copy()
 
-    count_subset_min, n_counts_min = filter_cells(adata_qc.X, min_counts=min_counts_per_cell)
-    count_subset_max, n_counts_max = filter_cells(adata_qc.X, max_counts=max_counts_per_cell)
-    gene_subset_min, n_genes_min = filter_cells(adata_qc.X, min_genes=min_genes_per_cell)
-    gene_subset_max, n_genes_max = filter_cells(adata_qc.X, max_genes=max_genes_per_cell)
+    count_subset_min = np.ones_like(adata_qc.obs_names, dtype=bool)
+    count_subset_max = np.ones_like(adata_qc.obs_names, dtype=bool)
+    gene_subset_min = np.ones_like(adata_qc.obs_names, dtype=bool)
+    gene_subset_max = np.ones_like(adata_qc.obs_names, dtype=bool)
+    if min_counts_per_cell:
+        count_subset_min, n_counts_min = filter_cells(adata_qc.X, min_counts=min_counts_per_cell)
+    if max_counts_per_cell:
+        count_subset_max, n_counts_max = filter_cells(adata_qc.X, max_counts=max_counts_per_cell)
+    if min_genes_per_cell:
+        gene_subset_min, n_genes_min = filter_cells(adata_qc.X, min_genes=min_genes_per_cell)
+    if max_genes_per_cell:
+        gene_subset_max, n_genes_max = filter_cells(adata_qc.X, max_genes=max_genes_per_cell)
     adata.obs["qc_fail_counts"] = ~(count_subset_min & count_subset_max)
     adata.obs["qc_fail_genes"] = ~(gene_subset_min & gene_subset_max)
 
     seqsat_subset, mito_subset, rbc_subset = True, True, True
     if min_sequencing_saturation:
-        seqsat_subset &= adata_qc.obs["sequencing_saturation"] > min_sequencing_saturation
+        seqsat_subset &= adata_qc.obs["sequencing_saturation"].fillna(0) > min_sequencing_saturation
     if max_sequencing_saturation:
-        seqsat_subset &= adata_qc.obs["sequencing_saturation"] < max_sequencing_saturation
+        seqsat_subset &= adata_qc.obs["sequencing_saturation"].fillna(0) < max_sequencing_saturation
     if min_pct_mitochondrial:
-        mito_subset &= adata_qc.obs["pct_counts_mitochondrial"] > min_pct_mitochondrial
+        mito_subset &= adata_qc.obs["pct_counts_mitochondrial"].fillna(0) > min_pct_mitochondrial
     if max_pct_mitochondrial:
-        mito_subset &= adata_qc.obs["pct_counts_mitochondrial"] < max_pct_mitochondrial
+        mito_subset &= adata_qc.obs["pct_counts_mitochondrial"].fillna(0) < max_pct_mitochondrial
     if min_counts_hemoglobin:
-        rbc_subset &= adata_qc.obs["total_counts_hemoglobin"] > min_counts_hemoglobin
+        rbc_subset &= adata_qc.obs["total_counts_hemoglobin"].fillna(0) > min_counts_hemoglobin
     if max_counts_hemoglobin:
-        rbc_subset &= adata_qc.obs["total_counts_hemoglobin"] < max_counts_hemoglobin
+        rbc_subset &= adata_qc.obs["total_counts_hemoglobin"].fillna(0) < max_counts_hemoglobin
     keep_subset = count_subset_min & count_subset_max
     keep_subset &= gene_subset_min & gene_subset_max
     keep_subset &= seqsat_subset & mito_subset & rbc_subset
