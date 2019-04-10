@@ -70,33 +70,47 @@
   </div>
 
   <div id="software-card" class="card-body collapse" aria-labelledby="software-heading">
-    <ol class="list-group list-group-flush">
-      {% if adata.uns.get("is_aggregation", False) %}
+    <table class="table table-sm mb-0">
+    <caption>
+      1. More information about 10X Genomics CellRanger, which is used for read alignment and
+      count matrix generation, can be found
+      <a href="https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger">here</a>.
+      <br>
+      2. Scanpy is a Python-based analysis package from the Fabian Theis lab; read their
+      manuscript describing scanpy
+      <a href="https://genomebiology.biomedcentral.com/articles/10.1186/s13059-017-1382-0">here</a>.
+    </caption>
+    <thead>
+    <tr>
+      <th style="text-align: left" scope="col" colspan="1" rowspan="1">SampleID</th>
+      <th style="text-align: right" scope="col" colspan="1" rowspan="1">10X CellRanger<sup>1</sup></th>
+      <th style="text-align: right" scope="col" colspan="1" rowspan="1">10X Reference Genome<sup>1</sup></th>
+      <th style="text-align: right" scope="col" colspan="1" rowspan="1">Scanpy<sup>2</sup></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% if adata.uns.get("is_aggregation", False) %}
+
       {% for sampleid in adata.uns["sampleids"] %}
-      <li class="list-group-item">
-        <code>cellranger, version {{ adata.uns["cellranger_version"][sampleid] }}, 10X Genomics</code>
-        [<a href="https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger">ref</a>]
-      </li>
-      {% endfor %}
-      {% for sampleid in adata.uns["sampleids"] %}
-      <li class="list-group-item"><code>{{ sampleid }}: cellranger {{ adata.uns["genome"][sampleid] }} reference,
-        version {{ adata.uns["cellranger_reference_version"][sampleid] }}, 10X Genomics</code>
-        [<a href="https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger">ref</a>]
-      </li>
+        <tr>
+          <th scope="row">{{ sampleid }}</th>
+          <td>{{ adata.uns["cellranger_version"][sampleid] }}</td>
+          <td>{{ adata.uns["genome"][sampleid] }}, version {{ adata.uns["cellranger_reference_version"][sampleid] }}</td>
+          <td>{{ scanpy_version }}</td>
+        </tr>
       {% endfor %}
 
-      {% else %}
-      <li class="list-group-item">
-        <code>cellranger, version {{ adata.uns["cellranger_version"] }}, 10X Genomics</code>
-        [<a href="https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger">ref</a>]
-      </li>
-      <li class="list-group-item"><code>cellranger {{ adata.uns["genome"] }} reference,
-        version {{ adata.uns["cellranger_reference_version"] }}, 10X Genomics</code>
-        [<a href="https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger">ref</a>]
-      </li>
-      {% endif %}
+    {% else %}
+      <tr>
+        <th scope="row">{{ adata.uns["sampleid"] }}</th>
+        <td>{{ adata.uns["cellranger_version"] }}</td>
+        <td>{{ adata.uns["genome"] }}, version {{ adata.uns["cellranger_reference_version"] }}</td>
+        <td>{{ scanpy_version }}</td>
+      </tr>
+    {% endif %}
+    </tbody>
+    </table>
 
-      <li class="list-group-item"><code>scanpy, version {{ scanpy_version }}</code> [<a href="https://genomebiology.biomedcentral.com/articles/10.1186/s13059-017-1382-0">ref</a>]</li>
-    </ol>
   </div>
 </div>

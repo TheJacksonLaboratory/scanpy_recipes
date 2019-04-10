@@ -9,7 +9,7 @@
     </a>
   </div>
 
-  <div id="qc-card" class="card-body collapse" aria-labelledby="qc-heading">
+  <div id="qc-card" class="card-body collapse pb-0" aria-labelledby="qc-heading">
     <p class="card-text">
       Each sample was filtered in three passes.  During FASTQ generation, reads with more
       than 1 mismatch in the 8bp i7 index are excluded.  During alignment (using
@@ -32,23 +32,37 @@
       After this filtering, a digital counts matrix is generated for each sample:
     </p>
 
-    <ul class="list-group list-group-flush">
-      {% if adata.uns["is_aggregation"] %}
-        {% for sampleid in adata.uns["sampleids"] %}
-          <li class="list-group-item">
-            <strong>{{ sampleid }}</strong>: {{ adata.uns["raw_cells"][sampleid] }} (cells) by
-            {{ adata.uns["raw_genes"][sampleid] }} (genes)
-          </li>
-        {% endfor %}
-      {% else %}
-        <li class="list-group-item">
-          <strong>{{ adata.uns["sampleid"] }}</strong>: {{ adata.uns["raw_cells"] }} (cells) by
-          {{ adata.uns["raw_genes"] }} (genes)
-        </li>
-      {% endif %}
-    </ul>
+    <table class="table table-sm w-50 mx-auto">
+    <thead>
+    <tr>
+      <th style="text-align: left" scope="col" colspan="1" rowspan="1">SampleID</th>
+      <th style="text-align: right" scope="col" colspan="1" rowspan="1">Raw Cells</th>
+      <th style="text-align: right" scope="col" colspan="1" rowspan="1">Raw Genes</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    {% if adata.uns.get("is_aggregation", False) %}
+      {% for sampleid in adata.uns["sampleids"] %}
+        <tr>
+          <th scope="row">{{ sampleid }}</th>
+          <td>{{ adata.uns["raw_cells"][sampleid] }}</td>
+          <td>{{ adata.uns["raw_genes"][sampleid] }}</td>
+        </tr>
+      {% endfor %}
+    {% else %}
+      <tr>
+        <th scope="row">{{ adata.uns["sampleid"] }}</th>
+        <td>{{ adata.uns["raw_cells"] }}</td>
+        <td>{{ adata.uns["raw_genes"] }}</td>
+      </tr>
+    {% endif %}
+    </tbody>
+    </table>
 
     <p class="card-text">
+      The raw counts matrix was lastly filtered by hand using the criteria shown in the
+violin plots above, and listed in detail in the table below.
     </p>
 
     {% for sampleid in adata.uns["sampleids"] %}
@@ -58,8 +72,6 @@
         width="100%" />
     {% endfor %}
     <p class="card-text">
-      The raw counts matrix was lastly filtered by hand using the criteria shown in the
-violin plots above, and listed in detail in the table below.
       <a
       class="text-info" data-toggle="collapse" aria-expanded="false"
       id="qc-table-link" href="#qc-table" aria-controls="qc-table">
@@ -69,16 +81,19 @@ Click here to see a table showing the number cells and genes that were
 
     <div id="qc-table" aria-labelledby="qc-table-link" class="collapse table-hover table-responsive">
     <table class="table table-sm">
-    <caption>Quantities in (parentheses) denote the threshold used.  For example, "2
-(500)" under the "UMI counts" column means 2 cells were excluded due to having fewer than
-500 UMI counts.</caption>
+    <caption>
+      Quantities shown in gray within parentheses denote the upper and lower thresholds
+used for filtering.  For example, "2 (500, 40000)" under the "UMI counts" column means 2
+cells were excluded due to either having fewer than 500 or more than 40,000 UMI counts.
+Bounds displayed as by "-inf" or "inf" represent no lower or upper bound, respectively.
+    </caption>
     <thead>
     <tr>
-      <th scope="col" colspan="1" rowspan="2">SampleID</th>
+      <th scope="col" colspan="1" rowspan="2" width="12.5%">SampleID  </th>
       <th style="text-align: right" scope="col" colspan="1" rowspan="2">QC'd Cells</th>
       <th style="text-align: right" scope="col" colspan="1" rowspan="2">QC'd Genes</th>
       <th style="text-align: center" scope="col" colspan="5" rowspan="1">Cells Excluded by</th>
-      <th style="text-align: right" scope="col" colspan="1" rowspan="2">Genes Excluded by cell count</th>
+      <th style="text-align: right" scope="col" colspan="1" rowspan="2" width="12.5%">Genes Excluded by cell count</th>
     </tr>
 
     <tr>
@@ -91,132 +106,109 @@ Click here to see a table showing the number cells and genes that were
   </thead>
 
   <tbody>
+
+    {% macro table_element_bound(adata, metrics_name, threshold_name, sampleid=None, metric_type="cell") -%}
+        <td>
+          <p class="m-0">
+          {% if sampleid %}
+            {{ adata.uns["qc_metrics"][sampleid][metrics_name] }}
+            <br/><small class="text-secondary m-0">
+            {% if threshold_name in adata.uns["qc_" + metric_type + "_filter"][sampleid] %}
+              {{ adata.uns["qc_" + metric_type + "_filter"][sampleid][threshold_name] }}
+            {% else %}
+              (--, --)
+            {% endif %}
+            </small>
+          {% else %}
+            {{ adata.uns["qc_metrics"][metrics_name] }}
+            <br/><small class="text-secondary m-0">
+            {% if threshold_name in adata.uns["qc_" + metric_type + "_filter"] %}
+              {{ adata.uns["qc_" + metric_type + "_filter"][threshold_name] }}
+            {% else %}
+              (--, --)
+            {% endif %}
+            </small>
+          {% endif %}
+          </p>
+        </td>
+    {%- endmacro %}
+
+    {% macro table_element_nobound(adata, metrics_name, threshold_name, sampleid=None, metric_type="cell") -%}
+        <td>
+          <p class="m-0">
+          {% if sampleid %}
+            {{ adata.uns["qc_metrics"][sampleid][metrics_name] }} <br/>
+            <small class="text-secondary m-0">
+            ({{ adata.uns["qc_" + metric_type + "_filter"][sampleid][threshold_name] }})
+            </small>
+          {% else %}
+            {{ adata.uns["qc_metrics"][metrics_name] }} <br/>
+            <small class="text-secondary m-0">
+            ({{ adata.uns["qc_" + metric_type + "_filter"][threshold_name] }})
+            </small>
+          {% endif %}
+        </td>
+    {%- endmacro %}
+
     {% if adata.uns.get("is_aggregation", False) %}
+
       {% for sampleid in adata.uns["sampleids"] %}
         <tr>
           <th scope="row">{{ sampleid }}</th>
-
-          <td>
-            {{ adata.uns["qc_metrics"][sampleid]["cells"] }}
-          </td>
-
-          <td>
-            {{ adata.uns["qc_metrics"][sampleid]["genes"] }}
-          </td>
-
-          <td>
-            {{ adata.uns["qc_metrics"][sampleid]["low_gene_cells_removed"] }}
-            ({{ adata.uns["qc_cell_filter"][sampleid]["threshold_n_genes"] }})
-          </td>
-
-          <td>
-            {{ adata.uns["qc_metrics"][sampleid]["low_count_cells_removed"] }}
-            ({{ adata.uns["qc_cell_filter"][sampleid]["threshold_n_counts"] }})
-          </td>
-
-          <td>
-            {{ adata.uns["qc_metrics"][sampleid]["high_mtrna_cells_removed"] }}
-            {% if "threshold_percent_mito" in adata.uns["qc_cell_filter"][sampleid] %}
-            ({{ adata.uns["qc_cell_filter"][sampleid]["threshold_percent_mito"] }})
-            {% else %}
-            (--)
-            {% endif %}
-          </td>
-
-          <td>
-            {{ adata.uns["qc_metrics"][sampleid]["red_blood_cells_removed"] }}
-            {% if "threshold_hemoglobin_counts" in adata.uns["qc_cell_filter"][sampleid] %}
-            ({{ adata.uns["qc_cell_filter"][sampleid]["threshold_hemoglobin_counts"] }})
-            {% else %}
-            (--)
-            {% endif %}
-          </td>
-
-          <td>
-            {{ adata.uns["qc_metrics"][sampleid]["low_sequencing_saturation_cells_removed"] }}
-            {% if adata.uns["qc_cell_filter"][sampleid]["threshold_sequencing_saturation"] %}
-            ({{ adata.uns["qc_cell_filter"][sampleid]["threshold_sequencing_saturation"] }})
-            {% else %}
-            (--)
-            {% endif %}
-          </td>
-
-          <td>
-            {{ adata.uns["qc_metrics"][sampleid]["low_count_genes_removed"] }}
-            ({{ adata.uns["qc_gene_filter"][sampleid]["threshold_n_cells"] }})
-          </td>
+          <td> {{ adata.uns["qc_metrics"][sampleid]["cells"] }} </td>
+          <td> {{ adata.uns["qc_metrics"][sampleid]["genes"] }} </td>
+          {{ table_element_bound(adata, "low_gene_cells_removed", "threshold_n_genes_by_counts", sampleid=sampleid) }}
+          {{ table_element_bound(adata, "low_count_cells_removed", "threshold_total_counts", sampleid=sampleid) }}
+          {{ table_element_bound(adata, "high_mtrna_cells_removed", "threshold_pct_counts_mitochondrial", sampleid=sampleid) }}
+          {{ table_element_bound(adata, "red_blood_cells_removed", "threshold_total_counts_hemoglobin", sampleid=sampleid) }}
+          {{ table_element_bound(adata, "low_sequencing_saturation_cells_removed", "threshold_sequencing_saturation", sampleid=sampleid) }}
+          {{ table_element_nobound(adata, "low_count_genes_removed", "threshold_n_counts", sampleid=sampleid, metric_type="gene") }}
         </tr>
       {% endfor %}
 
     {% else %}
+
       <tr>
         <th scope="row">{{ adata.uns["sampleid"] }}</th>
-        <td>
-          {{ adata.uns["qc_metrics"]["cells"] }}
-        </td>
-
-        <td>
-          {{ adata.uns["qc_metrics"]["genes"] }}
-        </td>
-
-        <td>
-          {{ adata.uns["qc_metrics"]["low_gene_cells_removed"] }}
-          ({{ adata.uns["qc_cell_filter"]["threshold_n_genes"] }})
-        </td>
-
-        <td>
-          {{ adata.uns["qc_metrics"]["low_count_cells_removed"] }}
-          ({{ adata.uns["qc_cell_filter"]["threshold_n_counts"] }})
-        </td>
-
-        <td>
-          {{ adata.uns["qc_metrics"]["high_mtrna_cells_removed"] }}
-          {% if "threshold_percent_mito" in adata.uns["qc_cell_filter"] %}
-          ({{ adata.uns["qc_cell_filter"]["threshold_percent_mito"] }})
-          {% else %}
-          (--)
-          {% endif %}
-        </td>
-
-        <td>
-          {{ adata.uns["qc_metrics"]["red_blood_cells_removed"] }}
-          {% if adata.uns["qc_cell_filter"]["threshold_hemoglobin_counts"] %}
-          ({{ adata.uns["qc_cell_filter"]["threshold_hemoglobin_counts"] }})
-          {% else %}
-          (--)
-          {% endif %}
-        </td>
-
-        <td>
-          {{ adata.uns["qc_metrics"]["low_sequencing_saturation_cells_removed"] }}
-          {% if adata.uns["qc_cell_filter"]["threshold_sequencing_saturation"] %}
-          ({{ adata.uns["qc_cell_filter"]["threshold_sequencing_saturation"] }})
-          {% else %}
-          (--)
-          {% endif %}
-        </td>
-
-        <td>
-          {{ adata.uns["qc_metrics"]["low_count_genes_removed"] }}
-          ({{ adata.uns["qc_gene_filter"]["threshold_n_cells"] }})
-        </td>
+        <td> {{ adata.uns["qc_metrics"]["cells"] }} </td>
+        <td> {{ adata.uns["qc_metrics"]["genes"] }} </td>
+        {{ table_element_nobound(adata, "low_gene_cells_removed", "threshold_n_genes_by_counts") }}
+        {{ table_element_nobound(adata, "low_count_cells_removed", "threshold_total_counts") }}
+        {{ table_element_bound(adata, "high_mtrna_cells_removed", "threshold_pct_counts_mitochondrial") }}
+        {{ table_element_bound(adata, "red_blood_cells_removed", "threshold_total_counts_hemoglobin") }}
+        {{ table_element_bound(adata, "low_sequencing_saturation_cells_removed", "threshold_sequencing_saturation") }}
+        {{ table_element_nobound(adata, "low_count_genes_removed", "threshold_n_counts", metric_type="gene") }}
       </tr>
-    {% endif %}
 
+    {% endif %}
     </tbody>
     </table>
     </div>
 
+    <div class="card-deck" >
     {% for sampleid in adata.uns["sampleids"] %}
-    <div class="card-deck">
-      <div class="card card-body border-0">
-        <img class="mx-auto d-block"
+    {% if (loop.index0 % 3 == 0) and (loop.index0 > 1) %}
+    </div>
+    <div class="card-deck" >
+    {% endif %}
+      <div class="card card-body px-0 border-0">
+        <img class="card-img"
           src="data:image/png;base64,{{ adata.uns['report_images']['qc']['scatter'][sampleid] }}"
           alt="Gene vs UMI scatter plots colored by QC metrics."
-          width="100%" />
+          />
       </div>
-    </div>
-    {% endfor %}
+    {% if (loop.last) and (loop.index0 % 3 != 2) %}
+    <div class="card card-body border-0"></div>
 
+    {% endif %}
+    {% endfor %}
+    </div>
+
+    <div class="card-text bg-transparent border-0">
+      <sup class="text-secondary font-weight-light font-italic">
+      Note: all images are 600dpi PNG files; right-click and open in a new tab to view at full
+      resolution.
+      </sup>
+    </div>
   </div>
 </div>

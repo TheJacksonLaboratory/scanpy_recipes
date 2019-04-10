@@ -9,7 +9,7 @@
     </a>
   </div>
 
-  <div id="redux-card" class="card-body collapse" aria-labelledby="redux-heading">
+  <div id="redux-card" class="card-body collapse pb-0" aria-labelledby="redux-heading">
     <p class="card-text">
       The expression profiles of each cell at the {{ adata.uns["n_top_genes"] }} most
       highly variable genes (as measured by dispersion
@@ -25,21 +25,33 @@
       Subclustering was performed ad hoc on a per-cluster basis to separate visually
       distinct subpopulations of cells.
     </p>
+
     {% if adata.uns.get("is_aggregation", False) %}
-    <p class="card-text">
-      Dimensionality reduction color coded by sample is shown below.
-    </p>
-    <img class="mx-auto d-block"
-      src="data:image/png;base64,{{ adata.uns['report_images']['batches'] }}"
-      alt="UMAP embedding and sample-based labeling"
-      width="100%" />
+    <div class="card card-body px-0 border-0">
+      <p class="card-text">
+        Dimensionality reduction color coded by sample is shown below.
+      </p>
+      <img class="card-img w-50 mx-auto"
+        src="data:image/png;base64,{{ adata.uns['report_images']['batches'] }}"
+        alt="UMAP embedding and sample-based labeling"
+        />
+    </div>
     {% endif %}
-    <p class="card-text">
-      Preliminary clustering is shown below.
-    </p>
-    <img class="mx-auto d-block"
-      src="data:image/png;base64,{{ adata.uns['report_images']['clusters'] }}"
-      alt="UMAP embedding and community-based clustering"
-      width="100%" />
+
+    <div class="card card-body px-0 border-0">
+      <p class="card-text">
+        Preliminary clustering is shown below.
+      </p>
+      <img class="card-img w-50 mx-auto"
+        src="data:image/png;base64,{{ adata.uns['report_images']['clusters'] }}"
+        alt="UMAP embedding and community-based clustering"
+        />
+    </div>
+    <div class="card-text bg-transparent border-0">
+      <sup class="text-secondary font-weight-light font-italic">
+      Note: all images are 600dpi PNG files; right-click and open in a new tab to view at full
+      resolution.
+      </sup>
+    </div>
   </div>
 </div>
