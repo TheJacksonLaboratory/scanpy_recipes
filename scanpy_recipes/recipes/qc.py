@@ -29,6 +29,14 @@ def read_mito_file(genome):
     return read_data_file("mito", genome)
 
 
+def read_ribo_file(genome):
+    return read_data_file("ribo", genome)
+
+
+def read_proliferation_file(genome):
+    return read_data_file("proliferation", genome)
+
+
 def gen_qc(raw_adata):
     """
     Appends calculated metrics, sequencing_saturation,
