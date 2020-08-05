@@ -214,7 +214,7 @@ def get_rds_embedding(adata, cluster_key="cluster", n_dims=3, embedding_type="um
         embedding = adata.obsm[f"X_{embedding_type}_3d"]
     else:
         embedding = adata.obsm[f"X_{embedding_type}"]
-        embedding = np.column_stack((umap, np.zeros(umap.shape[0])))
+        embedding = np.column_stack((embedding, np.zeros(embedding.shape[0])))
     tsne_df = pd.DataFrame(embedding, columns=["V1", "V2", "V3"], index=adata.obs_names)
     tsne_df["dbCluster"] = adata.obs[cluster_key].astype(int)
 
